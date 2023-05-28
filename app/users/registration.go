@@ -7,6 +7,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func InternalError(message string, err error, writer http.ResponseWriter) {
@@ -47,8 +49,20 @@ func Register(writer http.ResponseWriter, request *http.Request) {
 		db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
 		defer db.Close()
 		if err != nil {
-			DbOpenError(err, writer)
+			DatabaseError(err, writer)
 		}
+
+		insert := "INSERT INTO users(first, last, email, password) VALUES ('" + firstName + "', '" + lastName + "', '" + email + "', '" + password + "')"
+		res, err := db.Query(insert)
+		if err != nil {
+			DatabaseError(err, writer)
+		}
+
+		fmt.Println(res)
+
+		// success response (failure response are used at those points)
+		writer.WriteHeader(http.StatusCreated)
+		writer.Write([]byte("Registered"))
 
 	} else {
 		writer.WriteHeader(http.StatusMethodNotAllowed)
