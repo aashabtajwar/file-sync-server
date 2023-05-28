@@ -1,20 +1,19 @@
+/*
+IMPORTANT NOTICE: ERORRS NEED TO DEALT WITH PROPERLY
+					RIGHT NOW THEY ARE NOT PROPERLY IMPLEMENTED
+*/
+
 package users
 
 import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
 )
-
-func InternalError(message string, err error, writer http.ResponseWriter) {
-	fmt.Printf(message)
-	io.WriteString(writer, message)
-}
 
 func Register(writer http.ResponseWriter, request *http.Request) {
 	/*
@@ -52,7 +51,13 @@ func Register(writer http.ResponseWriter, request *http.Request) {
 			DatabaseError(err, writer)
 		}
 
-		insert := "INSERT INTO users(first, last, email, password) VALUES ('" + firstName + "', '" + lastName + "', '" + email + "', '" + password + "')"
+		hashedPassword, err := HashPassword(password)
+		if err != nil {
+			InternalError("", err, writer)
+		}
+		fmt.Println("Hashed password " + string(hashedPassword))
+
+		insert := "INSERT INTO users(first, last, email, password) VALUES ('" + firstName + "', '" + lastName + "', '" + email + "', '" + string(hashedPassword) + "')"
 		res, err := db.Query(insert)
 		if err != nil {
 			DatabaseError(err, writer)
