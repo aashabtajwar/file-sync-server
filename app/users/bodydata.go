@@ -1,6 +1,7 @@
 package users
 
 type RegisterUser struct {
+	Id       string
 	First    string
 	Last     string
 	Email    string
