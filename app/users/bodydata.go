@@ -5,6 +5,7 @@ type RegisterUser struct {
 	First    string
 	Last     string
 	Email    string
+	Username string
 	Password string
 }
 
