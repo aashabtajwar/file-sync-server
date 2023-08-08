@@ -18,24 +18,20 @@ func main() {
 	// http for user services
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", home)
+
+	// auth and reg
 	mux.HandleFunc("/register", users.Register)
 	mux.HandleFunc("/login", users.Login)
+
+	// create content folder
+
+	// create workspace
+	//mux.HandleFunc("/createw")
+
 	err := http.ListenAndServe(":3333", mux)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// if anything goes wrong when listening, the app will close
-	// find a way to restart the server and other benefial ways
-	// to handle this (eg. gracefull shutdowns)
-
-	// go func() {
-
-	// 	err := http.ListenAndServe(":3333", mux)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// }()
 
 	fmt.Println("Hello world")
 }

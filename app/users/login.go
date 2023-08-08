@@ -42,9 +42,11 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 		if err != nil {
 			DatabaseError(err, writer)
 		}
+
+		fmt.Println("THE EMAIL ---> " + email)
 		var data RegisterUser
 		for res.Next() {
-			err := res.Scan(&data.Id, &data.First, &data.Last, &data.Email, &data.Password)
+			err := res.Scan(&data.Id, &data.First, &data.Last, &data.Email, &data.Password, &data.Username, &data.CreatedAt, &data.UpdatedAt)
 			if err != nil {
 				fmt.Println("the error")
 				fmt.Println(err)
