@@ -6,11 +6,18 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/aashabtajwar/th-server/app/tokenmanager"
 	"github.com/aashabtajwar/th-server/app/users"
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Home Page\n")
+}
+
+func authTest(w http.ResponseWriter, r *http.Request) {
+	token := r.Header["Authorization"][0]
+	decodedString := tokenmanager.DecodeToken(token)
+	fmt.Println(decodedString["email"])
 }
 
 func main() {
@@ -23,6 +30,7 @@ func main() {
 	mux.HandleFunc("/register", users.Register)
 	mux.HandleFunc("/login", users.Login)
 
+	mux.HandleFunc("/auth", authTest)
 	// create content folder
 
 	// create workspace

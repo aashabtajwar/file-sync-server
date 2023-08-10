@@ -2,6 +2,7 @@ package tokenmanager
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -53,3 +54,21 @@ func ValidateToken(signedToken string) (err error) {
 	}
 	return
 }
+
+func DecodeToken(token string) jwt.MapClaims {
+	claims := jwt.MapClaims{}
+	data, err := jwt.ParseWithClaims(token, claims, func(data *jwt.Token) (interface{}, error) {
+		return []byte("secret"), nil
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+	// return data
+	if claims, ok := data.Claims.(jwt.MapClaims); ok && data.Valid {
+		return claims
+	} else {
+		return nil
+	}
+}
+
+//func extractClaims()

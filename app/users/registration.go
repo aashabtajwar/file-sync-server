@@ -71,7 +71,7 @@ func Register(writer http.ResponseWriter, request *http.Request) {
 
 	} else {
 		writer.WriteHeader(http.StatusMethodNotAllowed)
-		writer.Write([]byte("405 Method Not Allowed"))
+		writer.Write([]byte("405 - Method Not Allowed"))
 	}
 	// read body
 
