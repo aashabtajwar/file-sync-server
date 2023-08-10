@@ -17,7 +17,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 func authTest(w http.ResponseWriter, r *http.Request) {
 	token := r.Header["Authorization"][0]
 	decodedString := tokenmanager.DecodeToken(token)
-	fmt.Println(decodedString["email"])
+	fmt.Println(decodedString)
 }
 
 func main() {

@@ -13,8 +13,11 @@ import (
 func Create(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == "POST" {
 
-		// extract user data from token
-		//		token :=
+		/*
+		* get the user data from jwt token
+		* use the data to query the user id (or add user id to the claims)
+		* create new workspace
+		 */
 
 		body, err := ioutil.ReadAll(request.Body)
 		if err != nil {

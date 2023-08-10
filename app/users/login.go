@@ -36,14 +36,14 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 		}
 
 		query := "SELECT * FROM users WHERE email='" + email + "';"
-		fmt.Println(query)
+		// fmt.Println(query)
 		res, err := db.Query(query)
 		defer res.Close()
 		if err != nil {
 			DatabaseError(err, writer)
 		}
 
-		fmt.Println("THE EMAIL ---> " + email)
+		// fmt.Println("THE EMAIL ---> " + email)
 		var data RegisterUser
 		for res.Next() {
 			err := res.Scan(&data.Id, &data.First, &data.Last, &data.Email, &data.Password, &data.Username, &data.CreatedAt, &data.UpdatedAt)
@@ -54,7 +54,7 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 			}
 
 		}
-		fmt.Println("NOW PRINTING DATA")
+		// fmt.Println("NOW PRINTING DATA")
 		if data.Email == "" {
 			fmt.Println("No such user")
 			writer.Write([]byte("No user with this email"))
@@ -70,7 +70,8 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 			}
 
 			// password matched, now generate JWT
-			tokenString, err := tokenmanager.GenerateJWT(data.Email, data.Username)
+			fmt.Println("Now to generate tokens. The claims that will added are --> " + data.Email + " and " + data.Id)
+			tokenString, err := tokenmanager.GenerateJWT(data.Email, data.Id)
 			if err != nil {
 				log.Fatal(err)
 			}
