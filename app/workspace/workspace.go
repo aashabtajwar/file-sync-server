@@ -27,9 +27,10 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 		if err != nil {
 			io.WriteString(writer, "Problem occured while dealing with data")
 		}
-
+		fmt.Println("Printing request body -> ")
 		var data map[string]string
 		er := json.Unmarshal(body, &data)
+		fmt.Println("printing workspace name -> " + data["name"])
 		if er != nil {
 			users.InternalError("Could Not Unmarshal Json Data", er, writer)
 		}
@@ -41,7 +42,7 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 		}
 		//insert := "INSERT INTO workspace(name, user_id) VALUES ('" + data["Name"] + "', '" + user_id + "')"
 
-		insert := "INSERT INTO workspace(name, user_id) VALUES ('" + data["Name"] + "', '" + user_id.(string) + "')"
+		insert := "INSERT INTO workspace(name, user_id) VALUES ('" + data["name"] + "', '" + user_id.(string) + "')"
 
 		res, err := db.Query(insert)
 		if err != nil {
