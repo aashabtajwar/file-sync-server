@@ -40,7 +40,6 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 		if err != nil {
 			users.DatabaseError(err, writer)
 		}
-		//insert := "INSERT INTO workspace(name, user_id) VALUES ('" + data["Name"] + "', '" + user_id + "')"
 
 		insert := "INSERT INTO workspace(name, user_id) VALUES ('" + data["name"] + "', '" + user_id.(string) + "')"
 
@@ -56,4 +55,8 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(http.StatusMethodNotAllowed)
 		writer.Write([]byte("405 - Method Not Allowed"))
 	}
+}
+
+func DeleteWorksapce() {
+
 }

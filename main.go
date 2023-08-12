@@ -10,6 +10,7 @@ import (
 	"github.com/aashabtajwar/th-server/app/tokenmanager"
 	"github.com/aashabtajwar/th-server/app/users"
 	"github.com/aashabtajwar/th-server/app/workspace"
+	"github.com/aashabtajwar/th-server/tcpserver"
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +24,12 @@ func authTest(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+
 	// consist of both HTTP and TCP services
+
+	// TCP server
+	go tcpserver.Start()
+
 	// http for user services
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", home)
@@ -35,7 +41,9 @@ func main() {
 	mux.HandleFunc("/auth", authTest)
 	// create content folder
 
+	fmt.Println("Turning on server")
 	// create workspace
+
 	mux.HandleFunc("/createw", workspace.Create)
 
 	err := http.ListenAndServe(":3333", mux)
