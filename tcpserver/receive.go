@@ -9,7 +9,8 @@ import (
 	"net"
 )
 
-func ReceiveFiles(conn net.Conn) {
+// first check if the data received is a file upload or a JWT token
+func CheckReceivedData(conn net.Conn) {
 	buf := new(bytes.Buffer)
 	for {
 		var size int64
@@ -24,4 +25,14 @@ func ReceiveFiles(conn net.Conn) {
 		fmt.Println(buf.Bytes())
 		fmt.Printf("Received %d bytes over the network\n", n)
 	}
+}
+
+// if the uploaded data is a JWT token
+func VerifyToken(conn net.Conn) {
+
+}
+
+// if the uploaded data is a file
+func HandleFile(conn net.Conn) {
+
 }

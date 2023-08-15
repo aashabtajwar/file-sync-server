@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -27,6 +28,8 @@ func main() {
 
 	// consist of both HTTP and TCP services
 
+	buf := new(bytes.Buffer)
+	fmt.Println(buf)
 	// TCP server
 	go tcpserver.Start()
 
