@@ -7,11 +7,12 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 )
 
 // first check if the data received is a file upload or a JWT token
 func CheckReceivedData(conn net.Conn) {
-	buf := new(bytes.Buffer)
+	// buf := new(bytes.Buffer)
 	dataBuf := new(bytes.Buffer)
 	for {
 		var size int64
@@ -26,26 +27,41 @@ func CheckReceivedData(conn net.Conn) {
 		// fmt.Println(size)
 		// fmt.Println("Second size value")
 		// fmt.Println(sizeTwo)
-		n, err := io.CopyN(buf, conn, int64(3))
-		if err != nil {
-			log.Fatal(err)
-		}
-		receivedBytes := buf.Bytes()
-		fmt.Println(string(receivedBytes[:]))
-		fmt.Printf("Received %d bytes over the network\n", n)
+
+		// n, err := io.CopyN(buf, conn, int64(5))
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// receivedBytes := buf.Bytes()
+		// fmt.Println(string(receivedBytes[:]))
+		// fmt.Printf("Received %d bytes over the network\n", n)
+		// if string(receivedBytes[:]) == "token" {
+		// 	VerifyToken(conn, dataBuf, size)
+		// } else {
+		// 	HandleFile(conn)
+		// }
 		binary.Read(conn, binary.LittleEndian, &size)
-		// time.Sleep(100 * time.Millisecond)
+		// // time.Sleep(100 * time.Millisecond)
 		x, err := io.CopyN(dataBuf, conn, int64(size))
 		if err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println(dataBuf.Bytes())
-		fmt.Printf("Received %d bytes", x)
+		fmt.Printf("Received %d bytes\n", x)
+		mimeType := http.DetectContentType(dataBuf.Bytes())
+		fmt.Println(mimeType)
 	}
 }
 
 // if the uploaded data is a JWT token
-func VerifyToken(conn net.Conn) {
+func VerifyToken(conn net.Conn, buffer *bytes.Buffer, size int64) {
+	binary.Read(conn, binary.LittleEndian, &size)
+	_, err := io.CopyN(buffer, conn, int64(size))
+	if err != nil {
+		log.Fatal(err)
+	}
+	token := string(buffer.Bytes()[:])
+	fmt.Println(token)
 
 }
 
