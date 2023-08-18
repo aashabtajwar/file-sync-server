@@ -14,6 +14,7 @@ func CheckReceivedData(conn net.Conn) {
 	// buf := new(bytes.Buffer)
 	dataBuf := new(bytes.Buffer)
 	c := 0
+	iter := 0
 	for {
 		var size int64
 		// read size from connection which is a binary
@@ -26,7 +27,8 @@ func CheckReceivedData(conn net.Conn) {
 		// 	log.Fatal(err)
 		// }
 		// receivedBytes := buf.Bytes()
-
+		iter += 1
+		fmt.Println("Iteration Number: ", iter)
 		binary.Read(conn, binary.LittleEndian, &size)
 		x, err := io.CopyN(dataBuf, conn, int64(size))
 		if err != nil {
@@ -39,7 +41,7 @@ func CheckReceivedData(conn net.Conn) {
 		if c%2 != 0 {
 			// file data received
 			// store the data in another variable
-			fmt.Println("this path taken")
+			fmt.Println("Handling raw data")
 			fmt.Printf("Count value %d\n", c)
 			fileData := dataBuf
 			fmt.Println(fileData)
@@ -47,19 +49,19 @@ func CheckReceivedData(conn net.Conn) {
 
 		} else if c%2 == 0 {
 			// file metadata received
+			fmt.Println("Handling Metadata")
 			data := dataBuf.Bytes()
 			dataString := string(data[:])
-			// mappedData := map[string]string{}
 			var mappedData map[string]string
 			if err := json.Unmarshal([]byte(dataString), &mappedData); err != nil {
 				fmt.Println("Error: ", err)
 			}
 			fmt.Println(mappedData)
 			c = 0
+			fmt.Println()
+			dataBuf.Reset()
 		}
-
 		// mimeType := http.DetectContentType(dataBuf.Bytes())
-		// fmt.Println(mimeType)
 	}
 }
 
