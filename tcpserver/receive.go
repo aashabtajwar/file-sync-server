@@ -3,53 +3,63 @@ package tcpserver
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net"
-	"net/http"
 )
 
-// first check if the data received is a file upload or a JWT token
 func CheckReceivedData(conn net.Conn) {
 	// buf := new(bytes.Buffer)
 	dataBuf := new(bytes.Buffer)
+	c := 0
 	for {
 		var size int64
-		// var sizeTwo int64
 		// read size from connection which is a binary
 		// &size because it needs to read into memory
-		// binary.Read(conn, binary.LittleEndian, &size)
-		// time.Sleep(100 * time.Millisecond)
 		// binary.Write(conn, binary.LittleEndian, &sizeTwo)
 		// copy from connection into buf
-		// fmt.Println("Received size ")
-		// fmt.Println(size)
-		// fmt.Println("Second size value")
-		// fmt.Println(sizeTwo)
 
 		// n, err := io.CopyN(buf, conn, int64(5))
 		// if err != nil {
 		// 	log.Fatal(err)
 		// }
 		// receivedBytes := buf.Bytes()
-		// fmt.Println(string(receivedBytes[:]))
-		// fmt.Printf("Received %d bytes over the network\n", n)
-		// if string(receivedBytes[:]) == "token" {
-		// 	VerifyToken(conn, dataBuf, size)
-		// } else {
-		// 	HandleFile(conn)
-		// }
+
 		binary.Read(conn, binary.LittleEndian, &size)
-		// // time.Sleep(100 * time.Millisecond)
 		x, err := io.CopyN(dataBuf, conn, int64(size))
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(dataBuf.Bytes())
-		fmt.Printf("Received %d bytes\n", x)
-		mimeType := http.DetectContentType(dataBuf.Bytes())
-		fmt.Println(mimeType)
+		c = c + 1
+		// fmt.Println(dataBuf.Bytes())
+		fmt.Printf("Received %d bytes and Count is %d\n", x, c)
+
+		if c%2 != 0 {
+			// file data received
+			// store the data in another variable
+			fmt.Println("this path taken")
+			fmt.Printf("Count value %d\n", c)
+			fileData := dataBuf
+			fmt.Println(fileData)
+			dataBuf.Reset()
+
+		} else if c%2 == 0 {
+			// file metadata received
+			data := dataBuf.Bytes()
+			dataString := string(data[:])
+			// mappedData := map[string]string{}
+			var mappedData map[string]string
+			if err := json.Unmarshal([]byte(dataString), &mappedData); err != nil {
+				fmt.Println("Error: ", err)
+			}
+			fmt.Println(mappedData)
+			c = 0
+		}
+
+		// mimeType := http.DetectContentType(dataBuf.Bytes())
+		// fmt.Println(mimeType)
 	}
 }
 
