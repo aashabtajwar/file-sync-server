@@ -8,9 +8,18 @@ import (
 	"io"
 	"log"
 	"net"
+
+	"github.com/aashabtajwar/th-server/app/tokenmanager"
 )
 
-func verifyToken(token *bytes.Buffer) {}
+func verifyToken(token *bytes.Buffer) {
+	stringToken := string(token.Bytes()[:])
+	claims := tokenmanager.DecodeToken(stringToken)
+	user_id := claims["id"]
+	fmt.Println("User ID", user_id)
+
+	// fmt.Println("JWT: ", stringToken)
+}
 
 func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 	fmt.Println("Printing metadata value", metadata["key1"])
@@ -20,6 +29,8 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 func CheckReceivedData(conn net.Conn) {
 	// buf := new(bytes.Buffer)
 	dataBuf := new(bytes.Buffer)
+
+	fileData := new(bytes.Buffer)
 	c := 0
 	iter := 0
 	for {
@@ -37,17 +48,15 @@ func CheckReceivedData(conn net.Conn) {
 		}
 		c = c + 1
 		fmt.Printf("Received %d bytes and Count is %d\n", x, c)
-
-		var fileData *bytes.Buffer
+		fmt.Println(dataBuf)
+		// var fileData *bytes.Bufferdata
 		var mappedData map[string]string
 
 		if c%2 != 0 {
 			// file data received
 			// store the data in another variable
 			fmt.Println("Handling raw data")
-			fmt.Printf("Count value %d\n", c)
-			fileData = dataBuf
-			fmt.Println(fileData)
+			fileData.Write(dataBuf.Bytes())
 			dataBuf.Reset()
 
 		} else if c%2 == 0 {
@@ -59,13 +68,17 @@ func CheckReceivedData(conn net.Conn) {
 				fmt.Println("Error: ", err)
 			}
 			fmt.Println(mappedData)
-			c = 0
-			fmt.Println()
 			dataBuf.Reset()
 		}
 		// mimeType := http.DetectContentType(dataBuf.Bytes())
-
-		go saveFile(fileData, mappedData)
+		if c == 2 {
+			if mappedData["type"] == "token" {
+				go verifyToken(fileData)
+			} else if mappedData["type"] == "file" {
+				go saveFile(fileData, mappedData)
+			}
+			c = 0
+		}
 	}
 }
 
