@@ -5,6 +5,8 @@ import (
 	"net"
 )
 
+var connections map[string]net.Conn
+
 func Start() {
 	ln, err := net.Listen("tcp", ":3030")
 	if err != nil {
