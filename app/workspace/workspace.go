@@ -57,6 +57,19 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func DeleteWorksapce() {
+func AddUserToWorkspace(w http.ResponseWriter, r *http.Request) {
+	/*
+	* add the user to the workspace
+	* do not give all permissions
+	* that is, do not give the same permission as the author
+	 */
+}
+
+func DeleteWorksapce(w http.ResponseWriter, r *http.Request) {
+	/* delete the workspace */
 
 }
+
+func RemoveUserFromWorkspace(w http.ResponseWriter, r *http.Request) {}
+
+func MakeUserAnAuthor(w http.ResponseWriter, r *http.Request) {}

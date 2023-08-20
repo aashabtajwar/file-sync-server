@@ -72,6 +72,12 @@ func CheckReceivedData(conn net.Conn) {
 		}
 		// mimeType := http.DetectContentType(dataBuf.Bytes())
 		if c == 2 {
+
+			/*
+				--------------------SIDE NOTES------------------------
+				* here, maybe channels should be used instead of go verifiedToken or go saveFile
+				* properly learn channels
+			*/
 			if mappedData["type"] == "token" {
 				go verifyToken(fileData)
 			} else if mappedData["type"] == "file" {
