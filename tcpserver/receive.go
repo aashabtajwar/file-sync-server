@@ -4,25 +4,57 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net"
-
-	"github.com/aashabtajwar/th-server/app/tokenmanager"
+	"os"
 )
 
-func verifyToken(token *bytes.Buffer) {
-	stringToken := string(token.Bytes()[:])
-	claims := tokenmanager.DecodeToken(stringToken)
-	user_id := claims["id"]
-	fmt.Println("User ID", user_id)
+// mimeType := http.DetectContentType(dataBuf.Bytes())
 
-	// fmt.Println("JWT: ", stringToken)
+var connectedUser map[net.Conn]string
+
+func verifyToken(token *bytes.Buffer, conn net.Conn) {
+	// stringToken := string(token.Bytes()[:])
+	// claims := tokenmanager.DecodeToken(stringToken)
+	// user_id := claims["id"]
+	// connectedUser[conn] = user_id.(string)
 }
 
+/*
+--------------------------NOTES ON FILE SAVING--------------------------------------
+* usually, file contents (just the changes) have to be turned into hashes and then sent by the client
+* when the server receives them, it will be saved as hashes (in the min.io ideally)
+* there will be many versions of the same file hash so that previous versions of the file can be restored
+*/
 func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
-	fmt.Println("Printing metadata value", metadata["key1"])
+	// this is not an ideal way to define storage dir
+	storageDir := "/home/aashab/code/src/github.com/aashabtajwar/th-server/storage/"
+	versionCarrierPath := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"] + "_currentversion.txt" // user_id should be extracted from connectedUser (or is this one okay?)
+	fmt.Println(versionCarrierPath)
+	if _, err := os.Stat(versionCarrierPath); err == nil {
+		data, er := os.ReadFile(versionCarrierPath)
+		if er != nil {
+			log.Fatal(er)
+		}
+		version := binary.BigEndian.Uint32(data)
+		fmt.Println(version)
+
+	} else if errors.Is(err, os.ErrNotExist) {
+		versionCarrierFile, er := os.Create(versionCarrierPath)
+		if er != nil {
+			log.Fatal(er)
+		}
+		defer versionCarrierFile.Close()
+		version := make([]byte, 4)
+		binary.BigEndian.PutUint32(version, 1)
+		_, e := versionCarrierFile.Write(version)
+		if er != nil {
+			log.Fatal(e)
+		}
+	}
 
 }
 
@@ -49,7 +81,6 @@ func CheckReceivedData(conn net.Conn) {
 		c = c + 1
 		fmt.Printf("Received %d bytes and Count is %d\n", x, c)
 		fmt.Println(dataBuf)
-		// var fileData *bytes.Bufferdata
 		var mappedData map[string]string
 
 		if c%2 != 0 {
@@ -70,37 +101,19 @@ func CheckReceivedData(conn net.Conn) {
 			fmt.Println(mappedData)
 			dataBuf.Reset()
 		}
-		// mimeType := http.DetectContentType(dataBuf.Bytes())
-		if c == 2 {
 
+		if c == 2 {
 			/*
 				--------------------SIDE NOTES------------------------
 				* here, maybe channels should be used instead of go verifiedToken or go saveFile
 				* properly learn channels
 			*/
 			if mappedData["type"] == "token" {
-				go verifyToken(fileData)
+				go verifyToken(fileData, conn)
 			} else if mappedData["type"] == "file" {
 				go saveFile(fileData, mappedData)
 			}
 			c = 0
 		}
 	}
-}
-
-// if the uploaded data is a JWT token
-// func VerifyToken(conn net.Conn, buffer *bytes.Buffer, size int64) {
-// 	binary.Read(conn, binary.LittleEndian, &size)
-// 	_, err := io.CopyN(buffer, conn, int64(size))
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	token := string(buffer.Bytes()[:])
-// 	fmt.Println(token)
-
-// }
-
-// if the uploaded data is a file
-func HandleFile(conn net.Conn) {
-
 }
