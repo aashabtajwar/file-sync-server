@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 )
 
 // mimeType := http.DetectContentType(dataBuf.Bytes())
@@ -33,7 +34,10 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 	// this is not an ideal way to define storage dir
 	storageDir := "/home/aashab/code/src/github.com/aashabtajwar/th-server/storage/"
 	versionCarrierPath := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"] + "_currentversion.txt" // user_id should be extracted from connectedUser (or is this one okay?)
+	fileDir := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"]
+
 	fmt.Println(versionCarrierPath)
+
 	if _, err := os.Stat(versionCarrierPath); err == nil {
 		data, er := os.ReadFile(versionCarrierPath)
 		if er != nil {
@@ -43,17 +47,32 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 		fmt.Println(version)
 
 	} else if errors.Is(err, os.ErrNotExist) {
+		// create file that carries file version number
 		versionCarrierFile, er := os.Create(versionCarrierPath)
 		if er != nil {
 			log.Fatal(er)
 		}
 		defer versionCarrierFile.Close()
-		version := make([]byte, 4)
-		binary.BigEndian.PutUint32(version, 1)
-		_, e := versionCarrierFile.Write(version)
+		versionInString := strconv.Itoa(1)
+		versionInBytes := []byte(versionInString)
+
+		_, e := versionCarrierFile.Write(versionInBytes)
 		if er != nil {
 			log.Fatal(e)
 		}
+		filePath := fileDir + "_1." + metadata["mimetype"]
+		file, er := os.Create(filePath)
+		if er != nil {
+			log.Fatal("File Saving Error: ", er)
+		}
+		defer file.Close()
+
+		n, er := file.Write(fileData.Bytes())
+		if er != nil {
+			log.Fatal(er)
+		}
+		fmt.Println("File Created: ", n)
+
 	}
 
 }

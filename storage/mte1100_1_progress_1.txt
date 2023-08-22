@@ -1,0 +1,6 @@
+cover
+objectives
+system architecture (progress)
+technical stack and why you chose them (progress)
+flow chart
+code for the progress
