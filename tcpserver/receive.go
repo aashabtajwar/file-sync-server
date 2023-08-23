@@ -36,15 +36,35 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 	versionCarrierPath := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"] + "_currentversion.txt" // user_id should be extracted from connectedUser (or is this one okay?)
 	fileDir := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"]
 
-	fmt.Println(versionCarrierPath)
-
 	if _, err := os.Stat(versionCarrierPath); err == nil {
 		data, er := os.ReadFile(versionCarrierPath)
 		if er != nil {
 			log.Fatal(er)
 		}
-		version := binary.BigEndian.Uint32(data)
-		fmt.Println(version)
+		versionInString := string(data[:])
+		version, er := strconv.Atoi(versionInString)
+		version += 1
+		newFileName := fileDir + "_" + strconv.Itoa(version) + "." + metadata["mimetype"]
+
+		// save updated file version number
+		f, er := os.OpenFile(versionCarrierPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		if er != nil {
+			log.Fatal(er)
+		}
+		defer f.Close()
+		f.WriteString(strconv.Itoa(version))
+		// save updated file
+		file, er := os.Create(newFileName)
+		if er != nil {
+			log.Fatal("Error Creating Updated File: ", er)
+		}
+		defer file.Close()
+
+		n, er := file.Write(fileData.Bytes())
+		if er != nil {
+			log.Fatal(er)
+		}
+		fmt.Println("Writed: ", n)
 
 	} else if errors.Is(err, os.ErrNotExist) {
 		// create file that carries file version number
@@ -91,33 +111,28 @@ func CheckReceivedData(conn net.Conn) {
 		// binary.Write(conn, binary.LittleEndian, &sizeTwo)
 
 		iter += 1
-		fmt.Println("Iteration Number: ", iter)
 		binary.Read(conn, binary.LittleEndian, &size)
-		x, err := io.CopyN(dataBuf, conn, int64(size))
+		_, err := io.CopyN(dataBuf, conn, int64(size))
 		if err != nil {
 			log.Fatal(err)
 		}
 		c = c + 1
-		fmt.Printf("Received %d bytes and Count is %d\n", x, c)
 		fmt.Println(dataBuf)
 		var mappedData map[string]string
 
 		if c%2 != 0 {
-			// file data received
+			// raw file data received
 			// store the data in another variable
-			fmt.Println("Handling raw data")
 			fileData.Write(dataBuf.Bytes())
 			dataBuf.Reset()
 
 		} else if c%2 == 0 {
 			// file metadata received
-			fmt.Println("Handling Metadata")
 			data := dataBuf.Bytes()
 			dataString := string(data[:])
 			if err := json.Unmarshal([]byte(dataString), &mappedData); err != nil {
 				fmt.Println("Error: ", err)
 			}
-			fmt.Println(mappedData)
 			dataBuf.Reset()
 		}
 

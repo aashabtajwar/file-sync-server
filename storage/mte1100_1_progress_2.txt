@@ -1,0 +1,11 @@
+cover
+objectives
+system architecture (progress)
+technical stack and why you chose them (progress)
+flow chart
+code for the progress
+new content
+And some more content
+did not change
+more lines
+testing changed file
