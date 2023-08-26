@@ -45,9 +45,12 @@ func main() {
 	// create content folder
 
 	fmt.Println("Turning on server")
-	// create workspace
 
+	// create workspace
 	mux.HandleFunc("/createw", workspace.Create)
+
+	// show workspace files
+	mux.HandleFunc("/workspace/", workspace.ShowFilesInWorkspace)
 
 	err := http.ListenAndServe(":3333", mux)
 	if err != nil {

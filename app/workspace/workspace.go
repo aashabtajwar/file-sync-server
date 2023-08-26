@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/aashabtajwar/th-server/app/tokenmanager"
 	"github.com/aashabtajwar/th-server/app/users"
@@ -73,3 +74,38 @@ func DeleteWorksapce(w http.ResponseWriter, r *http.Request) {
 func RemoveUserFromWorkspace(w http.ResponseWriter, r *http.Request) {}
 
 func MakeUserAnAuthor(w http.ResponseWriter, r *http.Request) {}
+
+func ShowFilesInWorkspace(w http.ResponseWriter, r *http.Request) {
+	// here user is not authorized but
+	// AUTHORIZE USER FIRST!!!!!
+	// read id url
+	// then query from db
+
+	file_id := r.URL.Query()["id"][0]
+	var files []string
+
+	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
+	defer db.Close()
+	if err != nil {
+		fmt.Println("Error Opening Database:\n", err)
+	}
+	queryString := fmt.Sprintf("SELECT filename FROM workspace_files WHERE workspace_id='%s'", file_id)
+	rows, err := db.Query(queryString)
+	if err != nil {
+		fmt.Println("Error Making Query to the Database:\n", err)
+	}
+	for rows.Next() {
+		var fileDir string
+		if err := rows.Scan(&fileDir); err != nil {
+			fmt.Println("Error Scanning through the queried rows\n", err)
+		}
+		// format file_name string to get the proper file name
+		fileName := strings.Split(fileDir, "/")
+		files = append(files, fileName[len(fileName)-1])
+	}
+	f := WorkspaceFiles{Files: files}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Println(f)
+	json.NewEncoder(w).Encode(f)
+}
