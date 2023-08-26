@@ -29,13 +29,13 @@ When the file is received for the first time, create two files; first one is nam
 #### Workspace Files Table
 
 - id
+- filename
 - foreign key workspace
 - foreign key user
 - version
 - created_at
 - updated at
 
-update 1 on workspace files table: file_name column was added
 
 ## File Sending
 
