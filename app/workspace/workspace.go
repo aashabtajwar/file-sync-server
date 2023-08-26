@@ -76,36 +76,56 @@ func RemoveUserFromWorkspace(w http.ResponseWriter, r *http.Request) {}
 func MakeUserAnAuthor(w http.ResponseWriter, r *http.Request) {}
 
 func ShowFilesInWorkspace(w http.ResponseWriter, r *http.Request) {
-	// here user is not authorized but
-	// AUTHORIZE USER FIRST!!!!!
 	// read id url
 	// then query from db
 
-	file_id := r.URL.Query()["id"][0]
-	var files []string
+	// authorize
+	// get userId from token
+	// query the workspace userId foreign key using workspace id from url query
+	// if these two match, authorize
+	token := r.Header["Authorization"][0]
+	user_id := tokenmanager.DecodeToken(token)["id"]
+	fmt.Println("Token User: ", user_id)
 
 	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
 	defer db.Close()
 	if err != nil {
 		fmt.Println("Error Opening Database:\n", err)
 	}
-	queryString := fmt.Sprintf("SELECT filename FROM workspace_files WHERE workspace_id='%s'", file_id)
-	rows, err := db.Query(queryString)
+	q := fmt.Sprintf("SELECT user_id FROM workspace WHERE workspace_id='%s'", r.URL.Query()["id"][0])
+	var foreignUserId string
+	if err := db.QueryRow(q).Scan(&foreignUserId); err != nil {
+		fmt.Println("Error Querying Row:\n", err)
+	}
+	fmt.Println("Fetched User: ", foreignUserId)
 	if err != nil {
-		fmt.Println("Error Making Query to the Database:\n", err)
+		fmt.Println("Error Fetching Row\n", err)
 	}
-	for rows.Next() {
-		var fileDir string
-		if err := rows.Scan(&fileDir); err != nil {
-			fmt.Println("Error Scanning through the queried rows\n", err)
+	if user_id == foreignUserId {
+		// workspace belongs to this user
+
+		file_id := r.URL.Query()["id"][0]
+		var files []string
+
+		queryString := fmt.Sprintf("SELECT filename FROM workspace_files WHERE workspace_id='%s'", file_id)
+		rows, err := db.Query(queryString)
+		if err != nil {
+			fmt.Println("Error Making Query to the Database:\n", err)
 		}
-		// format file_name string to get the proper file name
-		fileName := strings.Split(fileDir, "/")
-		files = append(files, fileName[len(fileName)-1])
+		for rows.Next() {
+			var fileDir string
+			if err := rows.Scan(&fileDir); err != nil {
+				fmt.Println("Error Scanning through the queried rows\n", err)
+			}
+			// format file_name string to get the proper file name
+			fileName := strings.Split(fileDir, "/")
+			files = append(files, fileName[len(fileName)-1])
+		}
+		f := WorkspaceFiles{Files: files}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Println(f)
+		json.NewEncoder(w).Encode(f)
 	}
-	f := WorkspaceFiles{Files: files}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	fmt.Println(f)
-	json.NewEncoder(w).Encode(f)
+
 }
