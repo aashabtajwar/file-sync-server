@@ -2,6 +2,7 @@ package tcpserver
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -87,13 +88,27 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 		}
 		defer file.Close()
 
-		n, er := file.Write(fileData.Bytes())
-		if er != nil {
+		_, errr := file.Write(fileData.Bytes())
+		if errr != nil {
 			log.Fatal(er)
 		}
-		fmt.Println("File Created: ", n)
 
+		// add to database
+		db, er := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
+		defer db.Close()
+		if er != nil {
+			fmt.Println("Error when saving info on DB: \n", err)
+		}
+		insert := fmt.Sprintf("INSERT INTO workspace_files (filename, workspace_id, user_id, version) VALUES ('%s', '%s', '%s', %d)", fileDir, metadata["workspace_id"], metadata["user_id"], 1)
+		res, err := db.Query(insert)
+		if err != nil {
+			fmt.Println("Insert Error:\n", err)
+		}
+		fmt.Println(res)
 	}
+
+	// check if this workspace have connected users
+	// if so send the file to them
 
 }
 
