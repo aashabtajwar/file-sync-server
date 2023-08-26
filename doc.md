@@ -24,6 +24,19 @@ When a file update comes, we have to save the updated file (or the changes in a 
 Solution: (This approach is when file is stored in the local FS, NOT in Min.io)  
 When the file is received for the first time, create two files; first one is named as workspace_userid_filename_currentversion.txt (currentversion will be named as this to indicate this file contains version current version number). This one will only contain the current version of the file. And the second file will be workspace_userid_filename_v?.mimetype. This is where the actual data will recide in, and the '?' indicates the current version. When updated file comes, first check if the file exists by seaching the first file name. If so, read the version, increment it by one, and finally write the new file with that new version.
 
+### Workspace
+
+#### Workspace Files Table
+
+- id
+- foreign key workspace
+- foreign key user
+- version
+- created_at
+- updated at
+
+update 1 on workspace files table: file_name column was added
+
 ## File Sending
 
 After file data is sent, the client will also send the filemetadata (containing file name, file type, etc) after 100ms. To avoid the server confusing this process with repeatative updates, the client will do the following:  
