@@ -36,6 +36,8 @@ When the file is received for the first time, create two files; first one is nam
 - created_at
 - updated at
 
+#### Adding Other Users to Workspace
+
 ## File Sending
 
 After file data is sent, the client will also send the filemetadata (containing file name, file type, etc) after 100ms. To avoid the server confusing this process with repeatative updates, the client will do the following:  

@@ -126,6 +126,10 @@ func ShowFilesInWorkspace(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Println(f)
 		json.NewEncoder(w).Encode(f)
+
+	} else {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("401 - Unauthorized"))
 	}
 
 }
