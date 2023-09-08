@@ -160,9 +160,19 @@ func ShowFilesInWorkspace(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 		// check if other users have access to this workspace
+		sharedWorkspaceQuery := fmt.Sprintf("SELECT user_id FROM shared_workspace WHERE workspace_id='%s'", r.URL.Query()["id"][0])
+		if err := db.QueryRow(sharedWorkspaceQuery).Scan(&foreignUserId); err != nil {
+			fmt.Println("Error Querying Row:\n", err)
+		}
+		fmt.Println("Fetched F-User: ", foreignUserId)
+		fmt.Println("This Use: ", user_id)
+		if user_id == foreignUserId {
+			queryWorkspaceFiles(db, w, r)
+		} else {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("401 - Unauthorized"))
+		}
 
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("401 - Unauthorized"))
 	}
 
 }
