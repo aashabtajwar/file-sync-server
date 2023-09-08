@@ -156,34 +156,40 @@ func ShowFilesInWorkspace(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error Fetching Row\n", err)
 	}
 	if user_id == foreignUserId {
-		// workspace belongs to this user
-
-		file_id := r.URL.Query()["id"][0]
-		var files []string
-
-		queryString := fmt.Sprintf("SELECT filename FROM workspace_files WHERE workspace_id='%s'", file_id)
-		rows, err := db.Query(queryString)
-		if err != nil {
-			fmt.Println("Error Making Query to the Database:\n", err)
-		}
-		for rows.Next() {
-			var fileDir string
-			if err := rows.Scan(&fileDir); err != nil {
-				fmt.Println("Error Scanning through the queried rows\n", err)
-			}
-			// format file_name string to get the proper file name
-			fileName := strings.Split(fileDir, "/")
-			files = append(files, fileName[len(fileName)-1])
-		}
-		f := WorkspaceFiles{Files: files}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		fmt.Println(f)
-		json.NewEncoder(w).Encode(f)
+		queryWorkspaceFiles(db, w, r)
 
 	} else {
+		// check if other users have access to this workspace
+
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("401 - Unauthorized"))
 	}
 
+}
+
+func queryWorkspaceFiles(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	// workspace belongs to this user
+
+	file_id := r.URL.Query()["id"][0]
+	var files []string
+
+	queryString := fmt.Sprintf("SELECT filename FROM workspace_files WHERE workspace_id='%s'", file_id)
+	rows, err := db.Query(queryString)
+	if err != nil {
+		fmt.Println("Error Making Query to the Database:\n", err)
+	}
+	for rows.Next() {
+		var fileDir string
+		if err := rows.Scan(&fileDir); err != nil {
+			fmt.Println("Error Scanning through the queried rows\n", err)
+		}
+		// format file_name string to get the proper file name
+		fileName := strings.Split(fileDir, "/")
+		files = append(files, fileName[len(fileName)-1])
+	}
+	f := WorkspaceFiles{Files: files}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Println(f)
+	json.NewEncoder(w).Encode(f)
 }
