@@ -7,10 +7,12 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/aashabtajwar/th-server/app/tokenmanager"
 	"github.com/aashabtajwar/th-server/app/users"
+	"github.com/aashabtajwar/th-server/errorhandling"
 )
 
 func Create(writer http.ResponseWriter, request *http.Request) {
@@ -59,11 +61,63 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 }
 
 func AddUserToWorkspace(w http.ResponseWriter, r *http.Request) {
-	/*
-	* add the user to the workspace
-	* do not give all permissions
-	* that is, do not give the same permission as the author
-	 */
+	// author adds the user by giving his email
+	// add the user to the workspace
+	// do not give all permissions
+	// that is, do not give the same permission as the author
+
+	// the user_email is passed to request body
+	// the workspace_id is passed to url
+	fmt.Println(r.Method)
+	if r.Method == "POST" {
+		var user_id int
+
+		// workspace_id := r.URL.Query()["workspace_id"][0]
+
+		token := r.Header["Authorization"][0]
+		author_id := tokenmanager.DecodeToken(token)["id"]
+
+		body, err := ioutil.ReadAll(r.Body)
+
+		errorhandling.JsonMarshallingError(err)
+
+		var bodyData map[string]string
+		er := json.Unmarshal(body, &bodyData)
+
+		errorhandling.JsonMarshallingError(er)
+
+		// ideally user_id should be directly inserted
+		// but here, the user_id is first queried and then inserted
+		// this adds a bit more time
+		// find a way to eliminate this
+		email := bodyData["email"]
+		workspace_id := bodyData["workspace_id"]
+
+		db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
+		defer db.Close()
+
+		errorhandling.DbConnectionError(er)
+
+		query := fmt.Sprintf("SELECT id FROM users WHERE email='%s'", email)
+		if er := db.QueryRow(query).Scan(&user_id); er != nil {
+			fmt.Println("Error Fetching Row:\n", er)
+		}
+		fmt.Println(user_id) // successfully returns user_id
+
+		insertQuery := fmt.Sprintf("INSERT INTO shared_workspace (workspace_id, author_id, user_id) VALUES ('%s', '%s', '%s')", workspace_id, author_id.(string), strconv.Itoa(user_id))
+		response, err := db.Exec(insertQuery)
+
+		errorhandling.DbInsertError(err)
+
+		fmt.Println(response)
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte("User Added to Workspace"))
+
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("405 - Method Not Allowed"))
+	}
+
 }
 
 func DeleteWorksapce(w http.ResponseWriter, r *http.Request) {

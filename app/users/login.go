@@ -36,14 +36,12 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 		}
 
 		query := "SELECT * FROM users WHERE email='" + email + "';"
-		// fmt.Println(query)
 		res, err := db.Query(query)
 		defer res.Close()
 		if err != nil {
 			DatabaseError(err, writer)
 		}
 
-		// fmt.Println("THE EMAIL ---> " + email)
 		var data RegisterUser
 		for res.Next() {
 			err := res.Scan(&data.Id, &data.First, &data.Last, &data.Email, &data.Password, &data.Username, &data.CreatedAt, &data.UpdatedAt)
@@ -54,7 +52,6 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 			}
 
 		}
-		// fmt.Println("NOW PRINTING DATA")
 		if data.Email == "" {
 			fmt.Println("No such user")
 			writer.Write([]byte("No user with this email"))

@@ -24,6 +24,11 @@ func authTest(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(reflect.TypeOf(decodedString))
 }
 
+func testURL(w http.ResponseWriter, r *http.Request) {
+	url := r.URL.Query()
+	fmt.Println(url)
+}
+
 func main() {
 
 	// consist of both HTTP and TCP services
@@ -36,6 +41,9 @@ func main() {
 	// http for user services
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", home)
+
+	// test url query
+	mux.HandleFunc("/test/", testURL)
 
 	// auth and reg
 	mux.HandleFunc("/register", users.Register)
@@ -51,6 +59,9 @@ func main() {
 
 	// show workspace files
 	mux.HandleFunc("/workspace/", workspace.ShowFilesInWorkspace)
+
+	// add user to workspace
+	mux.HandleFunc("/add-user", workspace.AddUserToWorkspace)
 
 	err := http.ListenAndServe(":3333", mux)
 	if err != nil {

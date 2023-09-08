@@ -57,7 +57,7 @@ func Register(writer http.ResponseWriter, request *http.Request) {
 		}
 		fmt.Println("Hashed password " + string(hashedPassword))
 
-		insert := "INSERT INTO users(first, last, email, password) VALUES ('" + firstName + "', '" + lastName + "', '" + email + "', '" + string(hashedPassword) + "')"
+		insert := "INSERT INTO users(fname, lname, email, password) VALUES ('" + firstName + "', '" + lastName + "', '" + email + "', '" + string(hashedPassword) + "')"
 		res, err := db.Query(insert)
 		if err != nil {
 			DatabaseError(err, writer)

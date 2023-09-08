@@ -7,3 +7,7 @@ type WorkspaceCreationData struct {
 type WorkspaceFiles struct {
 	Files []string
 }
+
+type UserEmail struct {
+	Email string
+}
