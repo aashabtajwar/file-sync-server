@@ -12,17 +12,19 @@ import (
 	"net"
 	"os"
 	"strconv"
+
+	"github.com/aashabtajwar/th-server/app/tokenmanager"
 )
 
 // mimeType := http.DetectContentType(dataBuf.Bytes())
 
-var connectedUser map[net.Conn]string
+var connectedUser map[string]net.Conn
 
 func verifyToken(token *bytes.Buffer, conn net.Conn) {
-	// stringToken := string(token.Bytes()[:])
-	// claims := tokenmanager.DecodeToken(stringToken)
-	// user_id := claims["id"]
-	// connectedUser[conn] = user_id.(string)
+	stringToken := string(token.Bytes()[:])
+	claims := tokenmanager.DecodeToken(stringToken)
+	user_id := claims["id"]
+	connectedUser[user_id.(string)] = conn
 }
 
 /*
@@ -31,9 +33,10 @@ func verifyToken(token *bytes.Buffer, conn net.Conn) {
 * when the server receives them, it will be saved as hashes (in the min.io ideally)
 * there will be many versions of the same file hash so that previous versions of the file can be restored
 */
+
 func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 	// this is not an ideal way to define storage dir
-	storageDir := "/home/aashab/code/src/github.com/aashabtajwar/th-server/storage/"
+	storageDir := "/home/aashab/code/src/github.com/aashabtajwar/server-th/storage/"
 	versionCarrierPath := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"] + "_currentversion.txt" // user_id should be extracted from connectedUser (or is this one okay?)
 	fileDir := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"]
 
@@ -42,7 +45,10 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 	if er != nil {
 		fmt.Println("Error when saving info on DB: \n", er)
 	}
+
 	if _, err := os.Stat(versionCarrierPath); err == nil {
+
+		fmt.Println("following here")
 		data, er := os.ReadFile(versionCarrierPath)
 		if er != nil {
 			log.Fatal(er)
@@ -70,15 +76,15 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 		if er != nil {
 			log.Fatal(er)
 		}
-		fmt.Println("Writed: ", n)
+		fmt.Println("Written: ", n)
 
 		// query file version info from db
 		// for now, just querying using filename
 		// but this is not a good idea
 		// anyway, update the version
 
-		query := fmt.Sprintf("SELECT version FROM workspace_files WHERE filename='%s'", fileDir)
-		fmt.Println(query)
+		query := fmt.Sprintf("SELECT version, workspace_id FROM workspace_files WHERE filename='%s'", fileDir)
+
 		var versionNum int
 		if er := db.QueryRow(query).Scan(&versionNum); er != nil {
 			fmt.Println(er)
@@ -95,14 +101,18 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 		fmt.Println("File Updated")
 
 	} else if errors.Is(err, os.ErrNotExist) {
+		fmt.Println("here...")
 		// create file that carries file version number
 		versionCarrierFile, er := os.Create(versionCarrierPath)
 		if er != nil {
 			log.Fatal(er)
 		}
+		fmt.Println("came here...")
+
 		defer versionCarrierFile.Close()
 		versionInString := strconv.Itoa(1)
 		versionInBytes := []byte(versionInString)
+		fmt.Println("came here...")
 
 		_, e := versionCarrierFile.Write(versionInBytes)
 		if er != nil {
@@ -154,9 +164,10 @@ func CheckReceivedData(conn net.Conn) {
 			log.Fatal(err)
 		}
 		c = c + 1
-		fmt.Println(dataBuf)
+		// fmt.Println(dataBuf)
 		var mappedData map[string]string
 
+		fmt.Println("received data :\n", dataBuf.Bytes())
 		if c%2 != 0 {
 			// raw file data received
 			// store the data in another variable
@@ -165,11 +176,13 @@ func CheckReceivedData(conn net.Conn) {
 
 		} else if c%2 == 0 {
 			// file metadata received
+			fmt.Println("Received Meta :\n", dataBuf.Bytes())
 			data := dataBuf.Bytes()
 			dataString := string(data[:])
 			if err := json.Unmarshal([]byte(dataString), &mappedData); err != nil {
 				fmt.Println("Error: ", err)
 			}
+			fmt.Println(mappedData)
 			dataBuf.Reset()
 		}
 
@@ -183,6 +196,7 @@ func CheckReceivedData(conn net.Conn) {
 				go verifyToken(fileData, conn)
 			} else if mappedData["type"] == "file" {
 				go saveFile(fileData, mappedData)
+				go BroadCastToUsers(fileData, connectedUser, mappedData, conn)
 			}
 			c = 0
 		}

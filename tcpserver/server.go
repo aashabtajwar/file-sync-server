@@ -1,13 +1,11 @@
 package tcpserver
 
 import (
-	"fmt"
 	"log"
 	"net"
 )
 
-// var activeConnections map[string]net.Conn
-var activeConnections []net.Conn
+var activeConnections map[string][]net.Conn
 
 func Start() {
 	ln, err := net.Listen("tcp", ":3030")
@@ -16,8 +14,6 @@ func Start() {
 	}
 	for {
 		conn, err := ln.Accept()
-		activeConnections = append(activeConnections, conn)
-		fmt.Println("Printing Connections ", activeConnections)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -25,3 +25,9 @@ func DbInsertError(err error) {
 		fmt.Println("Error Inserting Row in Table:\n", err)
 	}
 }
+
+func DbQueryError(err error) {
+	if err != nil {
+		fmt.Println("Error Querying Rows:\n", err)
+	}
+}

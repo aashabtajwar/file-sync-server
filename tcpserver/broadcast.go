@@ -9,7 +9,7 @@ import (
 	"github.com/aashabtajwar/th-server/errorhandling"
 )
 
-func BroadCastToUsers(fileData *bytes.Buffer, conncetedUsers map[string]net.Conn, metadata map[string]string) {
+func BroadCastToUsers(fileData *bytes.Buffer, conncetedUsers map[string]net.Conn, metadata map[string]string, thisConn net.Conn) {
 	// query user_ids from db
 	// stream file to only those connected users that are in shared workspace
 
@@ -37,7 +37,10 @@ func BroadCastToUsers(fileData *bytes.Buffer, conncetedUsers map[string]net.Conn
 
 	}
 	// stream file data and metadata to these connections
-	for _, con := range validConnections {
+	fmt.Println("COMING TO BROADCAST")
+	// for _, con := range validConnections {
+	// 	if con != thisConn {
 
-	}
+	// 	}
+	// }
 }
