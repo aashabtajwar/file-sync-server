@@ -144,10 +144,10 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 
 }
 
-func CheckReceivedData(conn net.Conn) {
+func CheckReceivedData(conn net.Conn, connections []net.Conn) {
 	// buf := new(bytes.Buffer)
 	dataBuf := new(bytes.Buffer)
-
+	var dataString string
 	fileData := new(bytes.Buffer)
 	c := 0
 	iter := 0
@@ -164,7 +164,6 @@ func CheckReceivedData(conn net.Conn) {
 			log.Fatal(err)
 		}
 		c = c + 1
-		// fmt.Println(dataBuf)
 		var mappedData map[string]string
 
 		fmt.Println("received data :\n", dataBuf.Bytes())
@@ -178,7 +177,7 @@ func CheckReceivedData(conn net.Conn) {
 			// file metadata received
 			fmt.Println("Received Meta :\n", dataBuf.Bytes())
 			data := dataBuf.Bytes()
-			dataString := string(data[:])
+			dataString = string(data[:])
 			if err := json.Unmarshal([]byte(dataString), &mappedData); err != nil {
 				fmt.Println("Error: ", err)
 			}
@@ -196,7 +195,7 @@ func CheckReceivedData(conn net.Conn) {
 				go verifyToken(fileData, conn)
 			} else if mappedData["type"] == "file" {
 				go saveFile(fileData, mappedData)
-				go BroadCastToUsers(fileData, connectedUser, mappedData, conn)
+				go BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, connections)
 			}
 			c = 0
 		}

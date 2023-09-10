@@ -3,13 +3,16 @@ package tcpserver
 import (
 	"bytes"
 	"database/sql"
+	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
+	"time"
 
 	"github.com/aashabtajwar/th-server/errorhandling"
 )
 
-func BroadCastToUsers(fileData *bytes.Buffer, conncetedUsers map[string]net.Conn, metadata map[string]string, thisConn net.Conn) {
+func BroadCastToUsers(fileData *bytes.Buffer, conncetedUsers map[string]net.Conn, metadata map[string]string, thisConn net.Conn, dataString string, connections []net.Conn) {
 	// query user_ids from db
 	// stream file to only those connected users that are in shared workspace
 
@@ -38,9 +41,27 @@ func BroadCastToUsers(fileData *bytes.Buffer, conncetedUsers map[string]net.Conn
 	}
 	// stream file data and metadata to these connections
 	fmt.Println("COMING TO BROADCAST")
-	// for _, con := range validConnections {
-	// 	if con != thisConn {
+	for _, con := range connections {
+		if con != thisConn {
+			// file and file size
+			// metadata and metadata size
+			binary.Write(con, binary.LittleEndian, int64(len(fileData.Bytes())))
+			n, err := io.CopyN(con, bytes.NewReader(fileData.Bytes()), int64(len(fileData.Bytes())))
+			if err != nil {
+				fmt.Println("Error broadcasting data:\n", err)
+			}
+			fmt.Printf("Written %d\n", n)
 
-	// 	}
-	// }
+			time.Sleep(100 * time.Millisecond)
+
+			mData := []byte(dataString)
+			binary.Write(con, binary.LittleEndian, int64(len(mData)))
+			n, err = io.CopyN(con, bytes.NewReader(mData), int64(len(mData)))
+			if err != nil {
+				fmt.Println("Error broadcasting data:\n", err)
+			}
+			fmt.Printf("Written %d\n", n)
+
+		}
+	}
 }
