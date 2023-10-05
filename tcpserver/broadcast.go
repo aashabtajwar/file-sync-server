@@ -39,8 +39,8 @@ func BroadCastToUsers(fileData *bytes.Buffer, conncetedUsers map[string]net.Conn
 		}
 
 	}
-	// stream file data and metadata to these connections
-	fmt.Println("COMING TO BROADCAST")
+	// stream file data and metadata to connected connections
+	// except for the connection that sent them
 	for _, con := range connections {
 		if con != thisConn {
 			// file and file size

@@ -46,6 +46,19 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 		fmt.Println("Error when saving info on DB: \n", er)
 	}
 
+	// query workspaceId using workspace dir name
+	queryId := fmt.Sprintf("SELECT workspace_id FROM workspace where name='%s'", metadata["workspace"])
+	var workspaceId int
+	if err := db.QueryRow(queryId).Scan(&workspaceId); err != nil {
+		fmt.Println("Error Querying workspace ID", err)
+	}
+
+	fmt.Println("Now priting the workspace id: ", workspaceId)
+
+	workspaceIdString := strconv.Itoa(workspaceId)
+
+	metadata["workspaceId"] = workspaceIdString
+
 	if _, err := os.Stat(versionCarrierPath); err == nil {
 
 		fmt.Println("following here")
@@ -83,12 +96,13 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 		// but this is not a good idea
 		// anyway, update the version
 
-		query := fmt.Sprintf("SELECT version, workspace_id FROM workspace_files WHERE filename='%s'", fileDir)
+		query := fmt.Sprintf("SELECT version FROM workspace_files WHERE filename='%s'", fileDir)
 
 		var versionNum int
 		if er := db.QueryRow(query).Scan(&versionNum); er != nil {
 			fmt.Println(er)
 		}
+		// fmt.Println("Now Printing the ")
 
 		// for now sql version number and version number saved in file are different
 		// version number should ONLY be saved in DATABASE, not in file
@@ -101,14 +115,11 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 		fmt.Println("File Updated")
 
 	} else if errors.Is(err, os.ErrNotExist) {
-		fmt.Println("here...")
 		// create file that carries file version number
 		versionCarrierFile, er := os.Create(versionCarrierPath)
 		if er != nil {
 			log.Fatal(er)
 		}
-		fmt.Println("came here...")
-
 		defer versionCarrierFile.Close()
 		versionInString := strconv.Itoa(1)
 		versionInBytes := []byte(versionInString)
@@ -131,7 +142,7 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 		}
 
 		// add to database
-		insert := fmt.Sprintf("INSERT INTO workspace_files (filename, workspace_id, user_id, version) VALUES ('%s', '%s', '%s', %d)", fileDir, metadata["workspace_id"], metadata["user_id"], 1)
+		insert := fmt.Sprintf("INSERT INTO workspace_files (filename, workspace_id, user_id, version) VALUES ('%s', '%s', '%s', %d)", fileDir, metadata["workspaceId"], metadata["user_id"], 1)
 		res, err := db.Query(insert)
 		if err != nil {
 			fmt.Println("Insert Error:\n", err)

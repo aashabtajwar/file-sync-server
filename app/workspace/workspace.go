@@ -15,6 +15,41 @@ import (
 	"github.com/aashabtajwar/th-server/errorhandling"
 )
 
+func Download(w http.ResponseWriter, r *http.Request) {
+	// token := r.Header["Authorization"][0]
+	// userId := tokenmanager.DecodeToken(token)["id"]
+
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		fmt.Println("Error reading request body:\n", err)
+	}
+
+	var data map[string]string
+	er := json.Unmarshal(body, &data)
+
+	if er != nil {
+		fmt.Println("Error Unmarshalling Data:\n", er)
+	}
+
+	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
+	defer db.Close()
+	if err != nil {
+		fmt.Println("DB Opening Error:\n", err)
+	}
+
+	q := fmt.Sprintf("SELECT name FROM workspace WHERE workspace_id='%s'", data["workspace_id"])
+	var workspaceName string
+	if err := db.QueryRow(q).Scan(&workspaceName); err != nil {
+		fmt.Println("Error Querying Row:\n", err)
+	}
+	fmt.Println(workspaceName)
+
+	// now send files from this workspace
+
+	w.Write([]byte(workspaceName))
+}
+
 func Create(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == "POST" {
 
@@ -22,6 +57,7 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 		* get the user id from jwt token
 		* create new workspace
 		 */
+		fmt.Println("received request")
 		token := request.Header["Authorization"][0]
 		claims := tokenmanager.DecodeToken(token)
 		user_id := claims["id"]
@@ -128,6 +164,8 @@ func DeleteWorksapce(w http.ResponseWriter, r *http.Request) {
 func RemoveUserFromWorkspace(w http.ResponseWriter, r *http.Request) {}
 
 func MakeUserAnAuthor(w http.ResponseWriter, r *http.Request) {}
+
+func UserPermissions(w http.ResponseWriter, r *http.Request) {}
 
 func ShowFilesInWorkspace(w http.ResponseWriter, r *http.Request) {
 	// read id url
