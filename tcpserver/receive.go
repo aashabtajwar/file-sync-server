@@ -35,6 +35,8 @@ func verifyToken(token *bytes.Buffer, conn net.Conn) {
 */
 
 func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
+	fmt.Println("data for saving file...\n", fileData.Bytes())
+
 	// this is not an ideal way to define storage dir
 	storageDir := "/home/aashab/code/src/github.com/aashabtajwar/server-th/storage/"
 	versionCarrierPath := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"] + "_currentversion.txt" // user_id should be extracted from connectedUser (or is this one okay?)
@@ -181,6 +183,7 @@ func CheckReceivedData(conn net.Conn, connections []net.Conn) {
 		if c%2 != 0 {
 			// raw file data received
 			// store the data in another variable
+			fmt.Println("RRRR File data...")
 			fileData.Write(dataBuf.Bytes())
 			dataBuf.Reset()
 
@@ -205,8 +208,9 @@ func CheckReceivedData(conn net.Conn, connections []net.Conn) {
 			if mappedData["type"] == "token" {
 				go verifyToken(fileData, conn)
 			} else if mappedData["type"] == "file" {
-				go saveFile(fileData, mappedData)
 				go BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, connections)
+
+				go saveFile(fileData, mappedData)
 			}
 			c = 0
 		}

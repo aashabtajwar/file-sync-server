@@ -16,6 +16,9 @@ func Start() {
 	for {
 		conn, err := ln.Accept()
 		activeConnections = append(activeConnections, conn)
+		for _, e := range activeConnections {
+			fmt.Println("connection: ", e)
+		}
 		fmt.Println("New Connection: ", conn)
 		if err != nil {
 			log.Fatal(err)

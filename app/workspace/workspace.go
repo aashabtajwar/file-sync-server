@@ -121,6 +121,7 @@ func AddUserToWorkspace(w http.ResponseWriter, r *http.Request) {
 		er := json.Unmarshal(body, &bodyData)
 
 		errorhandling.JsonMarshallingError(er)
+		fmt.Println("workspace function here -->")
 
 		// ideally user_id should be directly inserted
 		// but here, the user_id is first queried and then inserted
@@ -133,6 +134,8 @@ func AddUserToWorkspace(w http.ResponseWriter, r *http.Request) {
 		defer db.Close()
 
 		errorhandling.DbConnectionError(er)
+
+		fmt.Println("workspace function here -->")
 
 		query := fmt.Sprintf("SELECT id FROM users WHERE email='%s'", email)
 		if er := db.QueryRow(query).Scan(&user_id); er != nil {
