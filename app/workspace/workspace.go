@@ -82,13 +82,31 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 
 		insert := "INSERT INTO workspace(name, user_id) VALUES ('" + data["name"] + "', '" + user_id.(string) + "')"
 
-		res, err := db.Query(insert)
+		_, err = db.Query(insert)
 		if err != nil {
 			users.DatabaseError(err, writer)
 		}
-		fmt.Println(res)
+		// fmt.Println(insert)
+		q := "SELECT workspace_id FROM workspace ORDER BY workspace_id DESC LIMIT 1"
+		var lastId int
+		// v, err := db.Query(q)
+		if err := db.QueryRow(q).Scan(&lastId); err != nil {
+			fmt.Println("Error Querying Row:\n", err)
+		}
+
+		payload := make(map[string]string)
+
+		payload["message"] = "New Workspace Created"
+		payload["workspace_id"] = strconv.Itoa(lastId)
+		jsonRes, err := json.Marshal(payload)
+		if err != nil {
+			fmt.Println("Error marshalling json\n", jsonRes)
+		}
+
+		// respond with workspace id
 		writer.WriteHeader(http.StatusCreated)
-		writer.Write([]byte("New Workspace Created"))
+		writer.Header().Set("Content-Type", "application/json")
+		writer.Write(jsonRes)
 
 	} else {
 		writer.WriteHeader(http.StatusMethodNotAllowed)

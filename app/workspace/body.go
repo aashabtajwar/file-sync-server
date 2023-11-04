@@ -11,3 +11,8 @@ type WorkspaceFiles struct {
 type UserEmail struct {
 	Email string
 }
+
+type PayLoad struct {
+	Message string
+	Id      string
+}
