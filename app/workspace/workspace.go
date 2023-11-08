@@ -22,23 +22,34 @@ func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
 
 	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
 
-	var workspaceIDs []string
-	// q := fmt.Sprintf("SELECT workspace_id FROM shared_workspace WHERE user_id='%s'", user_id)
-	q := fmt.Sprintf("SELECT workspace.name FROM workspace INNER JOIN shared_workspace ON workspace.workspace_id=shared_workspace.workspace_id WHERE shared_workspace.user_id='%s'", user_id)
+	var workspaceIDs []map[string]string
+
+	q := fmt.Sprintf("SELECT workspace.name, workspace.workspace_id FROM workspace INNER JOIN shared_workspace ON workspace.workspace_id=shared_workspace.workspace_id WHERE shared_workspace.user_id='%s'", user_id)
 	rows, err := db.Query(q)
 
 	errorhandling.DbConnectionError(err)
 
 	for rows.Next() {
 		var workspace_id string
-		if err := rows.Scan(&workspace_id); err != nil {
+		var workspace_name string
+		keyValue := make(map[string]string)
+		if err := rows.Scan(&workspace_name, &workspace_id); err != nil {
 			fmt.Println("DB Row Scan Error\n", err)
 		}
-		workspaceIDs = append(workspaceIDs, workspace_id)
+		keyValue[workspace_name] = workspace_id
+		workspaceIDs = append(workspaceIDs, keyValue)
 	}
-	for _, e := range workspaceIDs {
-		fmt.Println(e)
+	var payload map[string]map[string]string
+	jsonResponse, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("Error Marshalling Json\n", jsonResponse)
 	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+	// for _, e := range workspaceIDs {
+	// 	fmt.Println(e)
+	// }
 
 }
 
