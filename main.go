@@ -60,6 +60,9 @@ func main() {
 	// add user to workspace
 	mux.HandleFunc("/add-user", workspace.AddUserToWorkspace)
 
+	// view workspaces to user
+	mux.HandleFunc("/check", workspace.ViewWorkspaces)
+
 	// download workspace
 	mux.HandleFunc("/download", workspace.Download)
 

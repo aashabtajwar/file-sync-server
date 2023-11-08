@@ -15,6 +15,33 @@ import (
 	"github.com/aashabtajwar/th-server/errorhandling"
 )
 
+func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
+	token := r.Header["Authorization"][0]
+	claims := tokenmanager.DecodeToken(token)
+	user_id := claims["id"]
+
+	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
+
+	var workspaceIDs []string
+	// q := fmt.Sprintf("SELECT workspace_id FROM shared_workspace WHERE user_id='%s'", user_id)
+	q := fmt.Sprintf("SELECT workspace.name FROM workspace INNER JOIN shared_workspace ON workspace.workspace_id=shared_workspace.workspace_id WHERE shared_workspace.user_id='%s'", user_id)
+	rows, err := db.Query(q)
+
+	errorhandling.DbConnectionError(err)
+
+	for rows.Next() {
+		var workspace_id string
+		if err := rows.Scan(&workspace_id); err != nil {
+			fmt.Println("DB Row Scan Error\n", err)
+		}
+		workspaceIDs = append(workspaceIDs, workspace_id)
+	}
+	for _, e := range workspaceIDs {
+		fmt.Println(e)
+	}
+
+}
+
 func Download(w http.ResponseWriter, r *http.Request) {
 	// token := r.Header["Authorization"][0]
 	// userId := tokenmanager.DecodeToken(token)["id"]
@@ -26,6 +53,7 @@ func Download(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var data map[string]string
+	var payload map[string]string
 	er := json.Unmarshal(body, &data)
 
 	if er != nil {
@@ -42,12 +70,23 @@ func Download(w http.ResponseWriter, r *http.Request) {
 	var workspaceName string
 	if err := db.QueryRow(q).Scan(&workspaceName); err != nil {
 		fmt.Println("Error Querying Row:\n", err)
+		payload["message"] = "Could Not Fetch Workspace Details"
+
 	}
-	fmt.Println(workspaceName)
+	// fmt.Println(workspaceName)
+	payload["message"] = "Successfully fetched"
+	payload["workspace_name"] = workspaceName
+	jsonRes, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("Error Marshalling Json\n", jsonRes)
+	}
 
 	// now send files from this workspace
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonRes)
+	// w.Write([]byte(workspaceName))
 
-	w.Write([]byte(workspaceName))
 }
 
 func Create(writer http.ResponseWriter, request *http.Request) {
