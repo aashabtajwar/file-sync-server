@@ -39,7 +39,10 @@ func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
 		keyValue[workspace_name] = workspace_id
 		workspaceIDs = append(workspaceIDs, keyValue)
 	}
-	var payload map[string]map[string]string
+	fmt.Println(workspaceIDs)
+	payload := make(map[string][]map[string]string)
+	payload["workspaces"] = workspaceIDs
+	fmt.Println(payload)
 	jsonResponse, err := json.Marshal(payload)
 	if err != nil {
 		fmt.Println("Error Marshalling Json\n", jsonResponse)
@@ -47,9 +50,6 @@ func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
-	// for _, e := range workspaceIDs {
-	// 	fmt.Println(e)
-	// }
 
 }
 
@@ -63,8 +63,8 @@ func Download(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error reading request body:\n", err)
 	}
 
-	var data map[string]string
-	var payload map[string]string
+	data := make(map[string]string)
+	payload := make(map[string]string)
 	er := json.Unmarshal(body, &data)
 
 	if er != nil {
@@ -92,12 +92,9 @@ func Download(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error Marshalling Json\n", jsonRes)
 	}
 
-	// now send files from this workspace
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonRes)
-	// w.Write([]byte(workspaceName))
-
 }
 
 func Create(writer http.ResponseWriter, request *http.Request) {
