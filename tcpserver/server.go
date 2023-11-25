@@ -6,7 +6,20 @@ import (
 	"net"
 )
 
+var server []net.Listener
 var activeConnections []net.Conn
+
+func SetupConn() net.Listener {
+	if len(server) == 1 {
+		return server[0]
+	}
+	ln, err := net.Listen("tcp", ":3030")
+	if err != nil {
+		log.Fatal(err)
+	}
+	server = append(server, ln)
+	return ln
+}
 
 func Start() {
 	ln, err := net.Listen("tcp", ":3030")

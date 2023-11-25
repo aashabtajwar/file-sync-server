@@ -53,6 +53,22 @@ func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// download version 2.0
+// just send the files for the intended workspace
+func DownloadV2(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error reading Request Body\n", err)
+	}
+	data := make(map[string]string)
+	er := json.Unmarshal(body, &data)
+	if er != nil {
+		fmt.Println("Error Unmarshalling Data\n", er)
+	}
+	// send file
+
+}
+
 func Download(w http.ResponseWriter, r *http.Request) {
 	// token := r.Header["Authorization"][0]
 	// userId := tokenmanager.DecodeToken(token)["id"]
