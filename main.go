@@ -64,7 +64,7 @@ func main() {
 	mux.HandleFunc("/check", workspace.ViewWorkspaces)
 
 	// download workspace
-	mux.HandleFunc("/download", workspace.Download)
+	mux.HandleFunc("/download", workspace.DownloadV2)
 
 	err := http.ListenAndServe(":3333", mux)
 	if err != nil {

@@ -22,10 +22,11 @@ func SetupConn() net.Listener {
 }
 
 func Start() {
-	ln, err := net.Listen("tcp", ":3030")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// ln, err := net.Listen("tcp", ":3030")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	ln := SetupConn()
 	for {
 		conn, err := ln.Accept()
 		activeConnections = append(activeConnections, conn)
