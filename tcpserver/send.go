@@ -1,12 +1,6 @@
 package tcpserver
 
-import (
-	"fmt"
-	"log"
-	"os"
-	"strings"
-	"time"
-)
+/*
 
 func SendFiles(workspaceName string, workspaceId string) {
 	// send files according to the workspace
@@ -30,9 +24,37 @@ func SendFiles(workspaceName string, workspaceId string) {
 					fmt.Println(err)
 					os.Exit(1)
 				}
-				fmt.Println(pwd)
+				filePath := pwd + "/" + e.Name()
+				file, err := os.Open(filePath)
+				if err != nil {
+					fmt.Println("Error opening file\n", err)
+				}
+				fi, err := file.Stat()
+				if err != nil {
+					fmt.Println("Error getting File Stat\n", err)
+				}
+				byteData, er := os.ReadFile(filePath)
+				if er != nil {
+					fmt.Println("Error reading file\n", er)
+				}
+
+				metaDataString := fmt.Sprintf(`
+					{
+						"workspace": "%s",
+						"filename": "%s",
+						"mimetype": "%s",
+						"type": "file",
+						"name": "%s"
+					}
+				`, workspaceName, e.Name(), splitted[len(splitted)-1], e.Name())
+
+				metaDataBytes := []byte(metaDataString)
+				binary.Write(co)
+
 			}
 
 		}
 	}
 }
+
+*/

@@ -37,7 +37,11 @@ func main() {
 
 	// http for user services
 	mux := http.NewServeMux()
+
 	mux.HandleFunc("/", home)
+
+	// validate token
+	mux.HandleFunc("/validate-token", users.ValidateUser)
 
 	// test url query
 	mux.HandleFunc("/test/", testURL)

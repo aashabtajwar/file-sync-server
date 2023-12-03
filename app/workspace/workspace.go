@@ -13,7 +13,6 @@ import (
 	"github.com/aashabtajwar/th-server/app/tokenmanager"
 	"github.com/aashabtajwar/th-server/app/users"
 	"github.com/aashabtajwar/th-server/errorhandling"
-	"github.com/aashabtajwar/th-server/tcpserver"
 )
 
 func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +66,7 @@ func DownloadV2(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error Unmarshalling Data\n", er)
 	}
 	// send file
-	tcpserver.SendFiles()
+	// tcpserver.SendFiles()
 
 }
 

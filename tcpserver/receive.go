@@ -21,10 +21,14 @@ import (
 var connectedUser map[string]net.Conn
 
 func verifyToken(token *bytes.Buffer, conn net.Conn) {
+	fmt.Println("raw token data\n", token)
 	stringToken := string(token.Bytes()[:])
+	fmt.Println("Printing --> ", stringToken)
 	claims := tokenmanager.DecodeToken(stringToken)
 	user_id := claims["id"]
 	connectedUser[user_id.(string)] = conn
+	AddConnection(user_id.(string), conn)
+	fmt.Println("New user connected: ", user_id.(string))
 }
 
 /*
