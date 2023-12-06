@@ -18,7 +18,7 @@ import (
 
 // mimeType := http.DetectContentType(dataBuf.Bytes())
 
-var connectedUser map[string]net.Conn
+var connectedUser = make(map[string]net.Conn)
 
 func verifyToken(token *bytes.Buffer, conn net.Conn) {
 	fmt.Println("raw token data\n", token)
