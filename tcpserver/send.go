@@ -1,8 +1,17 @@
 package tcpserver
 
-/*
+import (
+	"bytes"
+	"encoding/binary"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"strings"
+	"time"
+)
 
-func SendFiles(workspaceName string, workspaceId string) {
+func SendFiles(workspaceName string, workspaceId string, user_id string) {
 	// send files according to the workspace
 	// loop over the files and check if they contain the correct workspace_workspaceid in their names
 	// the ones that do, send those files
@@ -14,6 +23,7 @@ func SendFiles(workspaceName string, workspaceId string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	conn := ReturnConnection(user_id)
 	for _, e := range entries {
 		if strings.Contains(e.Name(), check) {
 			// make sure to only send .go files
@@ -49,12 +59,24 @@ func SendFiles(workspaceName string, workspaceId string) {
 				`, workspaceName, e.Name(), splitted[len(splitted)-1], e.Name())
 
 				metaDataBytes := []byte(metaDataString)
-				binary.Write(co)
+				binary.Write(conn, binary.LittleEndian, int64(fi.Size()))
+				n1, err := io.CopyN(conn, bytes.NewReader(byteData), int64(fi.Size()))
+				if err != nil {
+					fmt.Println("Error Sending File data\n", err)
+				}
+				fmt.Printf("Written %d bytes\n", n1)
+				time.Sleep(100 * time.Millisecond)
+
+				// send metadata
+				binary.Write(conn, binary.BigEndian, int64(len(metaDataBytes)))
+				n2, err := io.CopyN(conn, bytes.NewReader(metaDataBytes), int64(len(metaDataBytes)))
+				if err != nil {
+					fmt.Println("Error sending file metadatra\n", err)
+				}
+				fmt.Printf("Written %d bytes\n", n2)
 
 			}
 
 		}
 	}
 }
-
-*/

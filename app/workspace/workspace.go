@@ -13,6 +13,7 @@ import (
 	"github.com/aashabtajwar/th-server/app/tokenmanager"
 	"github.com/aashabtajwar/th-server/app/users"
 	"github.com/aashabtajwar/th-server/errorhandling"
+	"github.com/aashabtajwar/th-server/tcpserver"
 )
 
 func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
@@ -56,17 +57,31 @@ func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
 // download version 2.0
 // just send the files for the intended workspace
 func DownloadV2(w http.ResponseWriter, r *http.Request) {
+	token := r.Header["Authorization"][0]
+	claims := tokenmanager.DecodeToken(token)
+	user_id := claims["id"]
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println("Error reading Request Body\n", err)
 	}
+
 	data := make(map[string]string)
 	er := json.Unmarshal(body, &data)
+
 	if er != nil {
 		fmt.Println("Error Unmarshalling Data\n", er)
 	}
+
+	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
+	var workspaceName string
+	q := fmt.Sprintf("SELECT name FROM workspace WHERE workspace_id='%s'", data["workspace_id"])
+	if err := db.QueryRow(q).Scan(&workspaceName); err != nil {
+		fmt.Println("Error Querying Row\n", err)
+	}
+
 	// send file
-	// tcpserver.SendFiles()
+	tcpserver.SendFiles(workspaceName, data["workspace_id"], user_id.(string))
 
 }
 
@@ -224,8 +239,14 @@ func AddUserToWorkspace(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Error Fetching Row:\n", er)
 		}
 		fmt.Println(user_id) // successfully returns user_id
+		fmt.Println("Workspace ID --> ", workspace_id)
+		// converting workspace_id to int
+		workspace_id_int, err := strconv.Atoi(workspace_id)
+		if err != nil {
+			fmt.Println("erorr converting workspace id to integer\n", err)
+		}
 
-		insertQuery := fmt.Sprintf("INSERT INTO shared_workspace (workspace_id, author_id, user_id) VALUES ('%s', '%s', '%s')", workspace_id, author_id.(string), strconv.Itoa(user_id))
+		insertQuery := fmt.Sprintf("INSERT INTO shared_workspace (workspace_id, author_id, user_id) VALUES ('%d', '%s', '%s')", workspace_id_int, author_id.(string), strconv.Itoa(user_id))
 		response, err := db.Exec(insertQuery)
 
 		errorhandling.DbInsertError(err)
