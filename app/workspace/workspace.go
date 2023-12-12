@@ -57,6 +57,7 @@ func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
 // download version 2.0
 // just send the files for the intended workspace
 func DownloadV2(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("request came")
 	token := r.Header["Authorization"][0]
 	claims := tokenmanager.DecodeToken(token)
 	user_id := claims["id"]
@@ -81,6 +82,9 @@ func DownloadV2(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send file
+	fmt.Println("sending files now...")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Okay"))
 	tcpserver.SendFiles(workspaceName, data["workspace_id"], user_id.(string))
 
 }
