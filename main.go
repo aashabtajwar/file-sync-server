@@ -13,6 +13,7 @@ import (
 	"github.com/aashabtajwar/th-server/tcpserver"
 )
 
+// home test func
 func home(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Home Page\n")
 }
@@ -37,7 +38,11 @@ func main() {
 
 	// http for user services
 	mux := http.NewServeMux()
+
 	mux.HandleFunc("/", home)
+
+	// validate token
+	mux.HandleFunc("/validate-token", users.ValidateUser)
 
 	// test url query
 	mux.HandleFunc("/test/", testURL)
@@ -64,7 +69,7 @@ func main() {
 	mux.HandleFunc("/check", workspace.ViewWorkspaces)
 
 	// download workspace
-	mux.HandleFunc("/download", workspace.Download)
+	mux.HandleFunc("/download", workspace.DownloadV2)
 
 	err := http.ListenAndServe(":3333", mux)
 	if err != nil {
