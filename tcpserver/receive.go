@@ -137,12 +137,22 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 			log.Fatal(e)
 		}
 
-		spliitedFullName := strings.Split(fileDir, "/") 
-		justTheFileName := spliitedFullName[len(spliitedFullName) - 1] // gave this var name because usually the file name consists of the whole dir with it -_- (ik I have to change it)
-		rearrangedFileName := justTheFileName[]
+		spliitedFullName := strings.Split(fileDir, "/")
+		justTheFileName := spliitedFullName[len(spliitedFullName)-1] // gave this var name because usually the file name consists of the whole dir with it -_- (ik I have to change it)
+		rearrangedFileName := ""
+		for i, e := range spliitedFullName {
+			if i != len(spliitedFullName)-1 {
+				rearrangedFileName += e
+				rearrangedFileName += "/"
+			}
+		}
+		// fmt.Println("Rearrage")
+		splittedJustFileName := strings.Split(justTheFileName, ".") // separate mimetype for now
+		newFileName := splittedJustFileName[0] + "_v1_." + splittedJustFileName[1]
+		filePath := rearrangedFileName + newFileName
 		// filePath := splittedFileDir[0] + "_v1" + splittedFileDir[1]
 
-		filePath := fileDir + "_1." + metadata["mimetype"]
+		// filePath := fileDir + "_1." + metadata["mimetype"]
 		file, er := os.Create(filePath)
 		if er != nil {
 			log.Fatal("File Saving Error: ", er)
