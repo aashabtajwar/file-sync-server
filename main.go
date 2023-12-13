@@ -13,6 +13,7 @@ import (
 	"github.com/aashabtajwar/th-server/tcpserver"
 )
 
+// home test func
 func home(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Home Page\n")
 }
