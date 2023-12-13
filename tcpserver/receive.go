@@ -44,6 +44,9 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 
 	// this is not an ideal way to define storage dir
 	storageDir := "/home/aashab/code/src/github.com/aashabtajwar/server-th/storage/"
+
+	// version carrier path needs to be updated
+	// to have a better name
 	versionCarrierPath := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"] + "_currentversion.txt" // user_id should be extracted from connectedUser (or is this one okay?)
 	fileDir := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"]
 
@@ -66,9 +69,8 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 
 	metadata["workspaceId"] = workspaceIdString
 
+	// file exists
 	if _, err := os.Stat(versionCarrierPath); err == nil {
-
-		fmt.Println("following here")
 		data, er := os.ReadFile(versionCarrierPath)
 		if er != nil {
 			log.Fatal(er)
@@ -76,7 +78,19 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 		versionInString := string(data[:])
 		version, er := strconv.Atoi(versionInString)
 		version += 1
-		newFileName := fileDir + "_" + strconv.Itoa(version) + "." + metadata["mimetype"]
+		splittedFullName := strings.Split(fileDir, "/")
+		justTheFileName := splittedFullName[len(splittedFullName)-1]
+		rearragedFileName := ""
+		for i, e := range splittedFullName {
+			if i != len(splittedFullName)-1 {
+				rearragedFileName += e
+				rearragedFileName += "/"
+			}
+		}
+		splittedJustFileName := strings.Split(justTheFileName, ".")
+		newFileName := rearragedFileName + splittedJustFileName[0] + "_" + strconv.Itoa(version) + "_." + splittedJustFileName[1]
+
+		// newFileName := fileDir + "_" + strconv.Itoa(version) + "." + metadata["mimetype"]
 
 		// save updated file version number
 		f, er := os.OpenFile(versionCarrierPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
@@ -148,7 +162,7 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 		}
 		// fmt.Println("Rearrage")
 		splittedJustFileName := strings.Split(justTheFileName, ".") // separate mimetype for now
-		newFileName := splittedJustFileName[0] + "_v1_." + splittedJustFileName[1]
+		newFileName := splittedJustFileName[0] + "_1_." + splittedJustFileName[1]
 		filePath := rearrangedFileName + newFileName
 		// filePath := splittedFileDir[0] + "_v1" + splittedFileDir[1]
 
