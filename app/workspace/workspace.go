@@ -19,6 +19,7 @@ import (
 func resolveRequestBody() {}
 
 // func ViewFileVersions(w http.ResponseWriter, r *http.Request) {
+// 	versions := make(map)
 // 	body, err := io.ReadAll(r.Body)
 // 	if err != nil {
 // 		fmt.Println("Error Reading Body\n", err)
@@ -30,9 +31,20 @@ func resolveRequestBody() {}
 // 	if err != nil {
 // 		fmt.Println("Error Getting Curret Directory")
 // 	}
-// 	targetFile := requestBodyData["file_name"]
-
 // 	path := pwd + "/storage/"
+// 	match := requestBodyData["workspace_name"] + "_" + requestBodyData["file_name"]
+// 	entries, err := os.ReadDir("./storage/")
+
+// 	if err != nil {
+// 		fmt.Println("Error Reading Directory\n", err)
+// 	}
+// 	for _, e := range entries {
+// 		if strings.Contains(e.Name(), match) {
+// 			splittedFileName := strings.Split(e.Name(), "_")
+
+// 		}
+// 	}
+
 // }
 
 func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {

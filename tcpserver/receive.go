@@ -13,6 +13,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aashabtajwar/th-server/app/tokenmanager"
 )
@@ -88,7 +89,9 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 			}
 		}
 		splittedJustFileName := strings.Split(justTheFileName, ".")
-		newFileName := rearragedFileName + splittedJustFileName[0] + "_" + metadata["user_id"] + "_" + strconv.Itoa(version) + "_." + splittedJustFileName[1]
+
+		currentTime := time.Now().Unix()
+		newFileName := rearragedFileName + splittedJustFileName[0] + "_" + metadata["user_id"] + "_" + strconv.Itoa(version) + "_" + strconv.FormatInt(currentTime, 10) + "_." + splittedJustFileName[1]
 
 		// newFileName := fileDir + "_" + strconv.Itoa(version) + "." + metadata["mimetype"]
 
@@ -161,7 +164,8 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 			}
 		}
 		splittedJustFileName := strings.Split(justTheFileName, ".") // separate mimetype for now
-		newFileName := splittedJustFileName[0] + "_" + metadata["user_id"] + "_1_." + splittedJustFileName[1]
+		currentTime := time.Now().Unix()
+		newFileName := splittedJustFileName[0] + "_" + metadata["user_id"] + "_1_" + strconv.FormatInt(currentTime, 10) + "_." + splittedJustFileName[1]
 		filePath := rearrangedFileName + newFileName
 		// filePath := splittedFileDir[0] + "_v1" + splittedFileDir[1]
 
