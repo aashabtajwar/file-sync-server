@@ -16,6 +16,25 @@ import (
 	"github.com/aashabtajwar/th-server/tcpserver"
 )
 
+func resolveRequestBody() {}
+
+// func ViewFileVersions(w http.ResponseWriter, r *http.Request) {
+// 	body, err := io.ReadAll(r.Body)
+// 	if err != nil {
+// 		fmt.Println("Error Reading Body\n", err)
+// 	}
+// 	requestBodyData := make(map[string]string)
+// 	err = json.Unmarshal(body, &requestBodyData)
+
+// 	pwd, err := os.Getwd()
+// 	if err != nil {
+// 		fmt.Println("Error Getting Curret Directory")
+// 	}
+// 	targetFile := requestBodyData["file_name"]
+
+// 	path := pwd + "/storage/"
+// }
+
 func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
 	token := r.Header["Authorization"][0]
 	claims := tokenmanager.DecodeToken(token)

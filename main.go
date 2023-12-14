@@ -71,6 +71,9 @@ func main() {
 	// download workspace
 	mux.HandleFunc("/download", workspace.DownloadV2)
 
+	// check file versions
+	// mux.HandleFunc("/versions")
+
 	err := http.ListenAndServe(":3333", mux)
 	if err != nil {
 		log.Fatal(err)

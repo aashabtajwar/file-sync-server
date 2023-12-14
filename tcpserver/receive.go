@@ -48,8 +48,8 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 	// version carrier path needs to be updated
 	// to have a better name
 	versionCarrierPath := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"] + "_currentversion.txt" // user_id should be extracted from connectedUser (or is this one okay?)
-	fileDir := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"]
-
+	// fileDir := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"]
+	fileDir := storageDir + metadata["workspace"] + "_" + metadata["name"]
 	db, er := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
 	defer db.Close()
 	if er != nil {
@@ -88,7 +88,7 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 			}
 		}
 		splittedJustFileName := strings.Split(justTheFileName, ".")
-		newFileName := rearragedFileName + splittedJustFileName[0] + "_" + strconv.Itoa(version) + "_." + splittedJustFileName[1]
+		newFileName := rearragedFileName + splittedJustFileName[0] + "_" + metadata["user_id"] + "_" + strconv.Itoa(version) + "_." + splittedJustFileName[1]
 
 		// newFileName := fileDir + "_" + strconv.Itoa(version) + "." + metadata["mimetype"]
 
@@ -160,9 +160,8 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 				rearrangedFileName += "/"
 			}
 		}
-		// fmt.Println("Rearrage")
 		splittedJustFileName := strings.Split(justTheFileName, ".") // separate mimetype for now
-		newFileName := splittedJustFileName[0] + "_1_." + splittedJustFileName[1]
+		newFileName := splittedJustFileName[0] + "_" + metadata["user_id"] + "_1_." + splittedJustFileName[1]
 		filePath := rearrangedFileName + newFileName
 		// filePath := splittedFileDir[0] + "_v1" + splittedFileDir[1]
 
