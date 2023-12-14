@@ -247,7 +247,6 @@ func CheckReceivedData(conn net.Conn, connections []net.Conn) {
 				go verifyToken(fileData, conn)
 			} else if mappedData["type"] == "file" {
 				go BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, connections)
-
 				go saveFile(fileData, mappedData)
 			}
 			c = 0

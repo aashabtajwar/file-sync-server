@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -18,34 +19,53 @@ import (
 
 func resolveRequestBody() {}
 
-// func ViewFileVersions(w http.ResponseWriter, r *http.Request) {
-// 	versions := make(map)
-// 	body, err := io.ReadAll(r.Body)
-// 	if err != nil {
-// 		fmt.Println("Error Reading Body\n", err)
-// 	}
-// 	requestBodyData := make(map[string]string)
-// 	err = json.Unmarshal(body, &requestBodyData)
+func ViewFileVersions(w http.ResponseWriter, r *http.Request) {
+	// version no. - timestamp
+	versions := make(map[string]string)
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error Reading Body\n", err)
+	}
+	requestBodyData := make(map[string]string)
+	err = json.Unmarshal(body, &requestBodyData)
 
-// 	pwd, err := os.Getwd()
-// 	if err != nil {
-// 		fmt.Println("Error Getting Curret Directory")
-// 	}
-// 	path := pwd + "/storage/"
-// 	match := requestBodyData["workspace_name"] + "_" + requestBodyData["file_name"]
-// 	entries, err := os.ReadDir("./storage/")
+	match := requestBodyData["workspace_name"] + "_" + requestBodyData["file_name"]
+	fmt.Println(match)
+	entries, err := os.ReadDir("./storage/")
 
-// 	if err != nil {
-// 		fmt.Println("Error Reading Directory\n", err)
-// 	}
-// 	for _, e := range entries {
-// 		if strings.Contains(e.Name(), match) {
-// 			splittedFileName := strings.Split(e.Name(), "_")
+	if err != nil {
+		fmt.Println("Error Reading Directory\n", err)
+	}
+	versionsString := `{`
+	for _, e := range entries {
+		if strings.Contains(e.Name(), match) {
+			splittedFileName := strings.Split(e.Name(), "_")
+			versions[splittedFileName[3]] = splittedFileName[4]
+		}
+	}
 
-// 		}
-// 	}
+	count := 0
+	for i, n := range versions {
 
-// }
+		x := fmt.Sprintf(`"%s": "%s"`, i, n)
+		fmt.Println(x)
+		if count != len(versions)-1 {
+			x += ","
+		}
+		versionsString += x
+		count++
+	}
+	versionsString += `}`
+
+	response := make(map[string]string)
+	response["message"] = "Success Fetching File Versions"
+	response["versions"] = versionsString
+	jsonResponse, err := json.Marshal(response)
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+
+}
 
 func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
 	token := r.Header["Authorization"][0]

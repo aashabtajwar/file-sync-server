@@ -10,5 +10,4 @@ func HashPassword(password string) ([]byte, error) {
 		return nil, err
 	}
 	return bytes, nil
-
 }

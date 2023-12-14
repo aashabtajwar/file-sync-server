@@ -27,8 +27,6 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 		email := bodyData["email"]
 		password := bodyData["password"]
 
-		fmt.Println(password)
-
 		db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
 		defer db.Close()
 		if err != nil {
@@ -50,7 +48,6 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 				fmt.Println(err)
 				InternalError("Error scanning data", err, writer)
 			}
-
 		}
 		if data.Email == "" {
 			fmt.Println("No such user")
@@ -65,7 +62,6 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 				writer.Write([]byte("The password you entered is not correct"))
 
 			}
-
 			// password matched, now generate JWT
 			fmt.Println("Now to generate tokens. The claims that will added are --> " + data.Email + " and " + data.Id)
 			tokenString, err := tokenmanager.GenerateJWT(data.Email, data.Id)
@@ -76,10 +72,6 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 
 		}
 		fmt.Println(data.Email, data.Password)
-
-		//
-
-		// fmt.Println(res.Columns())
 
 	}
 }
