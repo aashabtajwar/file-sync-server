@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
@@ -14,11 +14,12 @@ import (
 
 func Login(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == "POST" {
-		body, err := ioutil.ReadAll(request.Body)
+		body, err := io.ReadAll(request.Body)
 		if err != nil {
 			InternalError("Could not ready body", err, writer)
 		}
 		var bodyData map[string]string
+		responseData := make(map[string]string)
 		er := json.Unmarshal(body, &bodyData)
 		if er != nil {
 			InternalError("Could not unmarshal json body", er, writer)
@@ -63,15 +64,27 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 
 			}
 			// password matched, now generate JWT
-			fmt.Println("Now to generate tokens. The claims that will added are --> " + data.Email + " and " + data.Id)
+			// fmt.Println("Now to generate tokens. The claims that will added are --> " + data.Email + " and " + data.Id)
 			tokenString, err := tokenmanager.GenerateJWT(data.Email, data.Id)
 			if err != nil {
 				log.Fatal(err)
 			}
-			writer.Write([]byte(tokenString))
+			responseData["message"] = "Log In Successful!"
+			responseData["token"] = tokenString
+			jsonResponse, err := json.Marshal(responseData)
+
+			if err != nil {
+				fmt.Println("Error Marshalling Data\n", err)
+			}
+
+			writer.Header().Set("Content-Type", "application/json")
+			writer.WriteHeader(http.StatusOK)
+
+			// writer.Write([]byte(tokenString))
+			writer.Write(jsonResponse)
 
 		}
-		fmt.Println(data.Email, data.Password)
+		// fmt.Println(data.Email, data.Password)
 
 	}
 }

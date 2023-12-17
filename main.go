@@ -74,6 +74,8 @@ func main() {
 	// check file versions
 	mux.HandleFunc("/versions", workspace.ViewFileVersions)
 
+	// exec.Command("xdg-open", "http:/127.0.0.1:3333/").Run()
+
 	err := http.ListenAndServe(":3333", mux)
 	if err != nil {
 		log.Fatal(err)
