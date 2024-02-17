@@ -11,6 +11,41 @@ import (
 	"time"
 )
 
+func SendNotificationMessage(msg string, userID string) {
+	time.Sleep(100 * time.Millisecond)
+	metaDataString := `
+		{
+			"isNotification": "1",
+			"type" : "information"
+		}
+	`
+	conn := ReturnConnection(userID)
+	if conn != nil {
+
+		msgBytes := []byte(msg)
+		metaDataBytes := []byte(metaDataString)
+		binary.Write(conn, binary.LittleEndian, int64(len(msgBytes)))
+		n1, err := io.CopyN(conn, bytes.NewReader(msgBytes), int64(len(msgBytes)))
+
+		if err != nil {
+			fmt.Println("Error Sending Message Data\n", err)
+		}
+
+		fmt.Printf("Written %d Message Bytes\n", n1)
+
+		time.Sleep(100 * time.Millisecond)
+
+		binary.Write(conn, binary.LittleEndian, int64(len(metaDataBytes)))
+		n2, err := io.CopyN(conn, bytes.NewReader(metaDataBytes), int64(len(metaDataBytes)))
+
+		if err != nil {
+			fmt.Println("Error Sending Message Metadata\n", err)
+		}
+
+		fmt.Printf("Writtten %d bytes of Metadata\n", n2)
+	}
+}
+
 func SendFiles(workspaceName string, workspaceId string, user_id string) {
 	// send files according to the workspace
 	// loop over the files and check if they contain the correct workspace_workspaceid in their names
@@ -64,7 +99,8 @@ func SendFiles(workspaceName string, workspaceId string, user_id string) {
 						"filename": "%s",
 						"mimetype": "%s",
 						"type": "file",
-						"name": "%s"
+						"name": "%s",
+						"isNotification" : "0"
 					}
 				`, workspaceName, e.Name(), splitted[len(splitted)-1], e.Name())
 				fmt.Println("Metadata string --> ", metaDataString)

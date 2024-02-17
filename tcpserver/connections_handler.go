@@ -1,6 +1,9 @@
 package tcpserver
 
-import "net"
+import (
+	"fmt"
+	"net"
+)
 
 // var connections []net.Conn
 
@@ -11,5 +14,10 @@ func AddConnection(user_id string, conn net.Conn) {
 }
 
 func ReturnConnection(user_id string) net.Conn {
-	return connections[user_id]
+	connection, found := connections[user_id]
+	if found {
+		fmt.Println("Found Connection = ", connection)
+		return connections[user_id]
+	}
+	return nil
 }

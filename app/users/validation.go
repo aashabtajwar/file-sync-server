@@ -11,6 +11,7 @@ import (
 func ValidateUser(w http.ResponseWriter, r *http.Request) {
 
 	message := make(map[string]string)
+	fmt.Println("auth header -> \n", r.Header["Authorization"])
 	token := r.Header["Authorization"][0]
 	isValid, err := tokenmanager.ValidateToken(token)
 

@@ -13,11 +13,55 @@ import (
 
 	"github.com/aashabtajwar/th-server/app/tokenmanager"
 	"github.com/aashabtajwar/th-server/app/users"
+	"github.com/aashabtajwar/th-server/database"
 	"github.com/aashabtajwar/th-server/errorhandling"
 	"github.com/aashabtajwar/th-server/tcpserver"
 )
 
-func resolveRequestBody() {}
+func resolveRequestBody(r *http.Request) map[string]string {
+	body, err := io.ReadAll(r.Body)
+	errorhandling.RequestBodyReadingError(err)
+	requestBodyData := make(map[string]string)
+	err = json.Unmarshal(body, &requestBodyData)
+	return requestBodyData
+}
+
+func ViewWorkspaceFiles(w http.ResponseWriter, r *http.Request) {
+	// token := r.Header["Authorization"][0]
+	// claims := tokenmanager.DecodeToken(token)
+	// user_id := claims["id"]
+	body, err := io.ReadAll(r.Body)
+	requestBodyData := make(map[string]string)
+	err = json.Unmarshal(body, &requestBodyData)
+	workspaceID := requestBodyData["workspace_id"]
+
+	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
+	var fileNames []string
+	q := fmt.Sprintf("SELECT filename FROM workspace_files WHERE workspace_id='%s'", workspaceID)
+	rows, err := db.Query(q)
+
+	if err != nil {
+		fmt.Println("Error fetching database rows\n", err)
+	}
+
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			fmt.Println("DB Scan Error\n", err)
+		}
+		fileNames = append(fileNames, name)
+	}
+	payload := make(map[string][]string)
+	payload["file_names"] = fileNames
+	jsonResponse, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("Error Marshalling json\n", err)
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+
+}
 
 func ViewFileVersions(w http.ResponseWriter, r *http.Request) {
 	// version no. - timestamp
@@ -67,17 +111,60 @@ func ViewFileVersions(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
+func ViewPersonalWorkspaces(w http.ResponseWriter, r *http.Request) {
+
 	token := r.Header["Authorization"][0]
 	claims := tokenmanager.DecodeToken(token)
 	user_id := claims["id"]
 
 	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
 
+	errorhandling.DbConnectionError(err)
+
 	var workspaceIDs []map[string]string
 
-	q := fmt.Sprintf("SELECT workspace.name, workspace.workspace_id FROM workspace INNER JOIN shared_workspace ON workspace.workspace_id=shared_workspace.workspace_id WHERE shared_workspace.user_id='%s'", user_id)
+	q := fmt.Sprintf("SELECT name, workspace_id FROM workspace WHERE user_id='%s'", user_id.(string))
 	rows, err := db.Query(q)
+
+	errorhandling.DbQueryError(err)
+
+	for rows.Next() {
+		var workspace_id string
+		var workspace_name string
+		keyValue := make(map[string]string)
+		if err := rows.Scan(&workspace_name, &workspace_id); err != nil {
+			fmt.Println("DB Row Scan Error\n", err)
+		}
+		keyValue[workspace_name] = workspace_id
+		workspaceIDs = append(workspaceIDs, keyValue)
+		fmt.Println("===> ", workspaceIDs)
+	}
+	fmt.Println(workspaceIDs)
+	payload := make(map[string][]map[string]string)
+	payload["workspaces"] = workspaceIDs
+	fmt.Println("PAYLOAD = ", payload)
+	jsonResponse, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("Error Marshalling Json\n", err)
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
+
+// Shared
+func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
+	token := r.Header["Authorization"][0]
+	claims := tokenmanager.DecodeToken(token)
+	user_id := claims["id"]
+
+	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
+	errorhandling.DbConnectionError(err)
+	var workspaceIDs []map[string]string
+
+	q := fmt.Sprintf("SELECT workspace.name, workspace.workspace_id FROM workspace INNER JOIN shared_workspace ON workspace.workspace_id=shared_workspace.workspace_id WHERE shared_workspace.user_id='%s'", user_id.(string))
+	rows, err := db.Query(q)
+	fmt.Println("rows = ", rows)
 
 	errorhandling.DbConnectionError(err)
 
@@ -90,14 +177,15 @@ func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
 		}
 		keyValue[workspace_name] = workspace_id
 		workspaceIDs = append(workspaceIDs, keyValue)
+		fmt.Println("===> ", workspaceIDs)
 	}
 	fmt.Println(workspaceIDs)
 	payload := make(map[string][]map[string]string)
 	payload["workspaces"] = workspaceIDs
-	fmt.Println(payload)
+	fmt.Println("PAYLOAD = ", payload)
 	jsonResponse, err := json.Marshal(payload)
 	if err != nil {
-		fmt.Println("Error Marshalling Json\n", jsonResponse)
+		fmt.Println("Error Marshalling Json\n", err)
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
@@ -134,8 +222,10 @@ func DownloadV2(w http.ResponseWriter, r *http.Request) {
 
 	// send file
 	fmt.Println("sending files now...")
+	fmt.Println(data["workspace_id"])
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Okay"))
+
 	tcpserver.SendFiles(workspaceName, data["workspace_id"], user_id.(string))
 
 }
@@ -196,6 +286,8 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 		claims := tokenmanager.DecodeToken(token)
 		user_id := claims["id"]
 
+		fmt.Println("PRINTING USER ID = ", user_id)
+
 		body, err := ioutil.ReadAll(request.Body)
 		if err != nil {
 			io.WriteString(writer, "Problem occured while dealing with data")
@@ -220,7 +312,6 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 		if err != nil {
 			users.DatabaseError(err, writer)
 		}
-		// fmt.Println(insert)
 		q := "SELECT workspace_id FROM workspace ORDER BY workspace_id DESC LIMIT 1"
 		var lastId int
 		// v, err := db.Query(q)
@@ -283,10 +374,10 @@ func AddUserToWorkspace(w http.ResponseWriter, r *http.Request) {
 		workspace_id := bodyData["workspace_id"]
 
 		db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
+
+		errorhandling.DbConnectionError(err)
+
 		defer db.Close()
-
-		errorhandling.DbConnectionError(er)
-
 		fmt.Println("workspace function here -->")
 
 		query := fmt.Sprintf("SELECT id FROM users WHERE email='%s'", email)
@@ -310,11 +401,51 @@ func AddUserToWorkspace(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte("User Added to Workspace"))
 
+		// send notification message via tcp
+		// msg := fmt.Sp	rintf()
+		tcpserver.SendNotificationMessage("Workspace Has Been Shared With You", strconv.Itoa(user_id))
+
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		w.Write([]byte("405 - Method Not Allowed"))
 	}
 
+}
+
+func ViewAddedUsers(w http.ResponseWriter, r *http.Request) {
+	requestBodyData := resolveRequestBody(r)
+	db := database.DBInit()
+	q := fmt.Sprintf(`
+		SELECT users.id, users.fname, users.lname
+		FROM shared_workspace
+		INNER JOIN users ON users.id = shared_workspace.user_id
+		WHERE shared_workspace.workspace_id='%s'
+	`, requestBodyData["workspace_id"])
+
+	var data []map[string]string
+
+	rows, err := db.Query(q)
+	errorhandling.DbQueryError(err)
+	for rows.Next() {
+		var userID string
+		var firstName string
+		var lastName string
+		keyValue := make(map[string]string)
+		if err := rows.Scan(&userID, &firstName, &lastName); err != nil {
+			fmt.Println("DB row scan error\n", err)
+		}
+		keyValue[firstName+" "+lastName] = userID
+		data = append(data, keyValue)
+	}
+	payload := make(map[string][]map[string]string)
+	payload["users"] = data
+	jsonresponse, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("Error Marshalling Json\n", err)
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonresponse)
 }
 
 func DeleteWorksapce(w http.ResponseWriter, r *http.Request) {

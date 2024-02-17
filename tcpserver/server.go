@@ -17,6 +17,7 @@ func SetupConn() net.Listener {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("Turning on TCP Server\n", ln)
 	server = append(server, ln)
 	return ln
 }

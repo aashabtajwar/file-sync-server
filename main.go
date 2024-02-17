@@ -31,6 +31,9 @@ func testURL(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
+	// start db
+	// database.DBInit()
+
 	// consist of both HTTP and TCP services
 
 	// TCP server
@@ -65,14 +68,20 @@ func main() {
 	// add user to workspace
 	mux.HandleFunc("/add-user", workspace.AddUserToWorkspace)
 
-	// view workspaces to user
+	// view shared remote workspaces to user
 	mux.HandleFunc("/check", workspace.ViewWorkspaces)
+
+	// personal remote
+	mux.HandleFunc("/check-remote", workspace.ViewPersonalWorkspaces)
 
 	// download workspace
 	mux.HandleFunc("/download", workspace.DownloadV2)
 
 	// check file versions
 	mux.HandleFunc("/versions", workspace.ViewFileVersions)
+
+	// workspace-files
+	mux.HandleFunc("/workspace-files", workspace.ViewWorkspaceFiles)
 
 	// exec.Command("xdg-open", "http:/127.0.0.1:3333/").Run()
 
