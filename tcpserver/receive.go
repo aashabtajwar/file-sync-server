@@ -41,7 +41,7 @@ func verifyToken(token *bytes.Buffer, conn net.Conn) {
 */
 
 func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
-	fmt.Println("data for saving file...\n", fileData.Bytes())
+	// fmt.Println("data for saving file...\n", fileData.Bytes())
 
 	// this is not an ideal way to define storage dir
 	storageDir := "/home/aashab/code/src/github.com/aashabtajwar/server-th/storage/"
@@ -52,10 +52,12 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 	// fileDir := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"]
 	fileDir := storageDir + metadata["workspace"] + "_" + metadata["name"]
 	db, er := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
-	defer db.Close()
 	if er != nil {
 		fmt.Println("Error when saving info on DB: \n", er)
 	}
+	defer db.Close()
+
+	// fmt.Println("FOLDER = ", metadata["workspace"])
 
 	// query workspaceId using workspace dir name
 	queryId := fmt.Sprintf("SELECT workspace_id FROM workspace where name='%s'", metadata["workspace"])
@@ -109,11 +111,11 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 		}
 		defer file.Close()
 
-		n, er := file.Write(fileData.Bytes())
+		_, er = file.Write(fileData.Bytes())
 		if er != nil {
 			log.Fatal(er)
 		}
-		fmt.Println("Written: ", n)
+		// fmt.Println("Written: ", n)
 
 		// query file version info from db
 		// for now, just querying using filename
@@ -147,7 +149,7 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 		defer versionCarrierFile.Close()
 		versionInString := strconv.Itoa(1)
 		versionInBytes := []byte(versionInString)
-		fmt.Println("came here...")
+		// fmt.Println("came here...")
 
 		_, e := versionCarrierFile.Write(versionInBytes)
 		if er != nil {
@@ -197,12 +199,16 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 
 func CheckReceivedData(conn net.Conn, connections []net.Conn) {
 	// buf := new(bytes.Buffer)
+	fmt.Println("CURRENT CONNECTIONS\n", connections)
 	dataBuf := new(bytes.Buffer)
+	// newDataBuf := make(chan bytes.Buffer)
 	var dataString string
 	fileData := new(bytes.Buffer)
 	c := 0
 	iter := 0
+	fmt.Println("Update 2 = ", connections)
 	for {
+		fmt.Println("Update 3 = ", connections)
 		var size int64
 		// read size from connection which is a binary
 		// &size because it needs to read into memory
@@ -217,27 +223,30 @@ func CheckReceivedData(conn net.Conn, connections []net.Conn) {
 		c = c + 1
 		var mappedData map[string]string
 
-		fmt.Println("received data :\n", dataBuf.Bytes())
+		// fmt.Println("received data from receiver :\n", dataBuf.Bytes())
 		if c%2 != 0 {
+			fmt.Println("Update 4.1 = ", connections)
 			// raw file data received
 			// store the data in another variable
-			fmt.Println("RRRR File data...")
+			// fmt.Println("RRRR File data...")
 			fileData.Write(dataBuf.Bytes())
 			dataBuf.Reset()
 
 		} else if c%2 == 0 {
+			fmt.Println("Update 4.2 = ", connections)
 			// file metadata received
-			fmt.Println("Received Meta :\n", dataBuf.Bytes())
+			// fmt.Println("Received Meta :\n", dataBuf.Bytes())
 			data := dataBuf.Bytes()
 			dataString = string(data[:])
 			if err := json.Unmarshal([]byte(dataString), &mappedData); err != nil {
 				fmt.Println("Error: ", err)
 			}
-			fmt.Println(mappedData)
+			// fmt.Println(mappedData)
 			dataBuf.Reset()
 		}
 
 		if c == 2 {
+			fmt.Println("Update 5 = ", connections)
 			/*
 				--------------------SIDE NOTES------------------------
 				* here, maybe channels should be used instead of go verifiedToken or go saveFile
@@ -246,7 +255,10 @@ func CheckReceivedData(conn net.Conn, connections []net.Conn) {
 			if mappedData["type"] == "token" {
 				go verifyToken(fileData, conn)
 			} else if mappedData["type"] == "file" {
-				go BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, connections)
+				fmt.Println("Curr Connection = ", connections)
+				conns = updatedConnections()
+				fmt.Println("Updated Curr Conns = ", conns)
+				BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, conns)
 				go saveFile(fileData, mappedData)
 			}
 			c = 0

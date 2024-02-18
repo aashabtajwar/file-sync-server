@@ -9,6 +9,12 @@ import (
 var server []net.Listener
 var activeConnections []net.Conn
 
+var conns []net.Conn
+
+func updatedConnections() []net.Conn {
+	return conns
+}
+
 func SetupConn() net.Listener {
 	if len(server) == 1 {
 		return server[0]
@@ -27,21 +33,20 @@ func Start() {
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
+	// msg := make(chan string)
 	ln := SetupConn()
 	for {
 		conn, err := ln.Accept()
 		activeConnections = append(activeConnections, conn)
+		conns = append(conns, conn)
 		for _, e := range activeConnections {
 			fmt.Println("connection: ", e)
 		}
 		fmt.Println("New Connection: ", conn)
+		fmt.Println("CC = ", connections)
 		if err != nil {
 			log.Fatal(err)
 		}
 		go CheckReceivedData(conn, activeConnections)
 	}
-}
-
-func readStreamLoop(conn net.Conn) {
-
 }
