@@ -33,6 +33,27 @@ func verifyToken(token *bytes.Buffer, conn net.Conn) {
 	fmt.Println("New user connected: ", user_id.(string))
 }
 
+func deleteFile(workspaceName string, fileName string) {
+	fileNameSplitted := strings.Split(fileName, ".")
+	fileName = fileNameSplitted[0]
+	fmt.Println("delete")
+	check := workspaceName + "_" + fileName
+	fmt.Println("pattern = ", check)
+	entries, err := os.ReadDir("./storage/")
+	if err != nil {
+		fmt.Println("Error Reading Directory\n", err)
+	}
+	for _, e := range entries {
+		if strings.Contains(e.Name(), check) {
+			// delete file
+			er := os.Remove("./storage/" + e.Name())
+			if er != nil {
+				fmt.Println("Error Removing File")
+			}
+		}
+	}
+}
+
 /*
 --------------------------NOTES ON FILE SAVING--------------------------------------
 * usually, file contents (just the changes) have to be turned into hashes and then sent by the client
@@ -255,11 +276,13 @@ func CheckReceivedData(conn net.Conn, connections []net.Conn) {
 			if mappedData["type"] == "token" {
 				go verifyToken(fileData, conn)
 			} else if mappedData["type"] == "file" {
-				fmt.Println("Curr Connection = ", connections)
-				conns = updatedConnections()
-				fmt.Println("Updated Curr Conns = ", conns)
 				BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, conns)
-				go saveFile(fileData, mappedData)
+				if mappedData["isDeleted"] == "Yes" {
+					deleteFile(mappedData["workspace"], mappedData["fileName"])
+				} else {
+					conns = updatedConnections()
+					go saveFile(fileData, mappedData)
+				}
 			}
 			c = 0
 		}
