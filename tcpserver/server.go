@@ -4,7 +4,88 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 )
+
+type TcpFServer struct {
+	listener net.Listener
+	quit     chan interface{}
+	wg       sync.WaitGroup
+}
+
+func NewServerTwo() *TcpFServer {
+	s := &TcpFServer{
+		quit: make(chan interface{}),
+	}
+	fmt.Println("turning on tcp server...")
+	l, err := net.Listen("tcp", ":3030")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("tcp server is on!")
+	s.listener = l
+	s.wg.Add(1)
+	return s
+}
+
+func NewServer(addr string) *TcpFServer {
+	s := &TcpFServer{
+		quit: make(chan interface{}),
+	}
+	fmt.Println("turning on tcp server...")
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("tcp server is on!")
+	s.listener = l
+	s.wg.Add(1)
+	s.serve()
+	return s
+}
+
+func (s *TcpFServer) Stop() {
+	fmt.Println("stopping tcp server...")
+	close(s.quit)
+	s.listener.Close()
+	s.wg.Wait()
+}
+
+func (s *TcpFServer) serve() {
+	fmt.Println("accepting connections!")
+	defer s.wg.Done()
+
+	for {
+		conn, err := s.listener.Accept()
+		if err != nil {
+			select {
+			case <-s.quit:
+				return
+			default:
+				log.Println("accept error", err)
+			}
+		} else {
+			s.wg.Add(1)
+			go func() {
+				fmt.Println("Connection found", conn)
+				s.handleConnection(conn)
+				fmt.Println("done with this...	")
+				s.wg.Done()
+			}()
+		}
+	}
+}
+
+func (s *TcpFServer) handleConnection(conn net.Conn) {
+	activeConnections = append(activeConnections, conn)
+	conns = append(conns, conn)
+	for _, e := range activeConnections {
+		fmt.Println("Connection: ", e)
+
+	}
+	fmt.Println("New Connection: ", conn)
+	s.CheckReceivedData(conn, activeConnections)
+}
 
 var server []net.Listener
 var activeConnections []net.Conn
@@ -34,9 +115,27 @@ func Start() {
 	// 	log.Fatal(err)
 	// }
 	// msg := make(chan string)
-	ln := SetupConn()
+
+	// s := NewServer(":3030")
+
+	// s.Stop()
+
+	// old code here
+	// s := NewServerTwo()
+
+	s := &TcpFServer{
+		quit: make(chan interface{}),
+	}
+	l, err := net.Listen("tcp", ":3030")
+	if err != nil {
+		log.Fatal(err)
+	}
+	s.listener = l
+	s.wg.Add(1)
+	// ln := SetupConn()
+
 	for {
-		conn, err := ln.Accept()
+		conn, err := s.listener.Accept()
 		activeConnections = append(activeConnections, conn)
 		conns = append(conns, conn)
 		for _, e := range activeConnections {
@@ -47,6 +146,8 @@ func Start() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		go CheckReceivedData(conn, activeConnections)
+		go s.CheckReceivedData(conn, activeConnections)
 	}
+
+	// old code ends here
 }
