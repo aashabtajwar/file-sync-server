@@ -197,7 +197,7 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 
 }
 
-func CheckReceivedData(conn net.Conn, connections []net.Conn) {
+func (s *TcpFServer) CheckReceivedData(conn net.Conn, connections []net.Conn) {
 	// buf := new(bytes.Buffer)
 	fmt.Println("CURRENT CONNECTIONS\n", connections)
 	dataBuf := new(bytes.Buffer)
@@ -207,61 +207,87 @@ func CheckReceivedData(conn net.Conn, connections []net.Conn) {
 	c := 0
 	iter := 0
 	fmt.Println("Update 2 = ", connections)
+
+	// Try:
+ReadLoop:
 	for {
-		fmt.Println("Update 3 = ", connections)
-		var size int64
-		// read size from connection which is a binary
-		// &size because it needs to read into memory
-		// binary.Write(conn, binary.LittleEndian, &sizeTwo)
+		select {
+		case <-s.quit:
+			fmt.Println("ending...")
+			return
+		default:
+			conn.SetDeadline(time.Now().Add(200 * time.Second))
+			var size int64
+			// read size from connection which is a binary
+			// &size because it needs to read into memory
+			// binary.Write(conn, binary.LittleEndian, &sizeTwo)
+			// continue Try
+			iter += 1
+			binary.Read(conn, binary.LittleEndian, &size)
+			n, err := io.CopyN(dataBuf, conn, int64(size))
+			if err != nil {
+				// log.Fatal(err)
+				if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
+					continue ReadLoop
 
-		iter += 1
-		binary.Read(conn, binary.LittleEndian, &size)
-		_, err := io.CopyN(dataBuf, conn, int64(size))
-		if err != nil {
-			log.Fatal(err)
-		}
-		c = c + 1
-		var mappedData map[string]string
-
-		// fmt.Println("received data from receiver :\n", dataBuf.Bytes())
-		if c%2 != 0 {
-			fmt.Println("Update 4.1 = ", connections)
-			// raw file data received
-			// store the data in another variable
-			// fmt.Println("RRRR File data...")
-			fileData.Write(dataBuf.Bytes())
-			dataBuf.Reset()
-
-		} else if c%2 == 0 {
-			fmt.Println("Update 4.2 = ", connections)
-			// file metadata received
-			// fmt.Println("Received Meta :\n", dataBuf.Bytes())
-			data := dataBuf.Bytes()
-			dataString = string(data[:])
-			if err := json.Unmarshal([]byte(dataString), &mappedData); err != nil {
-				fmt.Println("Error: ", err)
+				} else if err != io.EOF {
+					log.Println("read error", err)
+					return
+				} else {
+					log.Println(err)
+					fmt.Println("unknown error...")
+					return
+				}
 			}
-			// fmt.Println(mappedData)
-			dataBuf.Reset()
+			if n == 0 {
+				return
+			}
+			c = c + 1
+			var mappedData map[string]string
+
+			// fmt.Println("received data from receiver :\n", dataBuf.Bytes())
+			if c%2 != 0 {
+				fmt.Println("Update 4.1 = ", connections)
+				// raw file data received
+				// store the data in another variable
+				// fmt.Println("RRRR File data...")
+				fileData.Write(dataBuf.Bytes())
+				dataBuf.Reset()
+
+			} else if c%2 == 0 {
+				fmt.Println("Update 4.2 = ", connections)
+				// file metadata received
+				// fmt.Println("Received Meta :\n", dataBuf.Bytes())
+				data := dataBuf.Bytes()
+				dataString = string(data[:])
+				if err := json.Unmarshal([]byte(dataString), &mappedData); err != nil {
+					fmt.Println("Error: ", err)
+				}
+				// fmt.Println(mappedData)
+				dataBuf.Reset()
+			}
+
+			if c == 2 {
+				fmt.Println("Update 5 = ", connections)
+				/*
+					--------------------SIDE NOTES------------------------
+					* here, maybe channels should be used instead of go verifiedToken or go saveFile
+					* properly learn channels
+				*/
+				if mappedData["type"] == "token" {
+					go verifyToken(fileData, conn)
+				} else if mappedData["type"] == "file" {
+					fmt.Println("Curr Connection = ", connections)
+					conns = updatedConnections()
+					fmt.Println("Updated Curr Conns = ", conns)
+					BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, conns)
+					go saveFile(fileData, mappedData)
+				}
+				c = 0
+				continue ReadLoop
+			}
+
 		}
 
-		if c == 2 {
-			fmt.Println("Update 5 = ", connections)
-			/*
-				--------------------SIDE NOTES------------------------
-				* here, maybe channels should be used instead of go verifiedToken or go saveFile
-				* properly learn channels
-			*/
-			if mappedData["type"] == "token" {
-				go verifyToken(fileData, conn)
-			} else if mappedData["type"] == "file" {
-				fmt.Println("Curr Connection = ", connections)
-				conns = updatedConnections()
-				fmt.Println("Updated Curr Conns = ", conns)
-				BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, conns)
-				go saveFile(fileData, mappedData)
-			}
-			c = 0
-		}
 	}
 }
