@@ -18,11 +18,16 @@ import (
 	"github.com/aashabtajwar/th-server/tcpserver"
 )
 
+var permissionChange = make(map[string]int)
+
 func resolveRequestBody(r *http.Request) map[string]string {
 	body, err := io.ReadAll(r.Body)
 	errorhandling.RequestBodyReadingError(err)
 	requestBodyData := make(map[string]string)
 	err = json.Unmarshal(body, &requestBodyData)
+	if err != nil {
+		fmt.Println("Error Unmarshalling Json\n", err)
+	}
 	return requestBodyData
 }
 
@@ -325,7 +330,7 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 		payload["workspace_id"] = strconv.Itoa(lastId)
 		jsonRes, err := json.Marshal(payload)
 		if err != nil {
-			fmt.Println("Error marshalling json\n", jsonRes)
+			fmt.Println("Error marshalling json\n", err)
 		}
 
 		// respond with workspace id
@@ -413,6 +418,7 @@ func AddUserToWorkspace(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewAddedUsers(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("came here...")
 	requestBodyData := resolveRequestBody(r)
 	db := database.DBInit()
 	q := fmt.Sprintf(`
@@ -443,9 +449,42 @@ func ViewAddedUsers(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("Error Marshalling Json\n", err)
 	}
+	fmt.Println("sending response back...")
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonresponse)
+}
+
+func sendJsonResponse(payload map[string]string, w http.ResponseWriter) {
+	jsonresponse, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("Error Marshalling Json\n", err)
+	}
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonresponse)
+}
+
+func SetPermission(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("changing permission...")
+	requestBodyData := resolveRequestBody(r)
+	db := database.DBInit()
+	set := 0
+	if requestBodyData["permission"] == "write" {
+		set = 1
+	}
+	insert := fmt.Sprintf(`
+		UPDATE shared_workspace
+		SET permission=%d
+		WHERE user_id="%s" AND workspace_id="%s"
+	`, set, requestBodyData["user_id"], requestBodyData["workspace_id"])
+	_, err := db.Query(insert)
+	if err != nil {
+		users.DatabaseError(err, w)
+	}
+	payload := make(map[string]string)
+	sendJsonResponse(payload, w)
+
 }
 
 func DeleteWorksapce(w http.ResponseWriter, r *http.Request) {

@@ -59,6 +59,9 @@ func main() {
 
 	fmt.Println("Turning on server")
 
+	// users that have been shared with
+	// mux.HandleFunc("/shared-users)
+
 	// create workspace
 	mux.HandleFunc("/createw", workspace.Create)
 
@@ -67,6 +70,12 @@ func main() {
 
 	// add user to workspace
 	mux.HandleFunc("/add-user", workspace.AddUserToWorkspace)
+
+	// check shared users
+	mux.HandleFunc("/shared-users", workspace.ViewAddedUsers)
+
+	// set permission
+	mux.HandleFunc("/set-permission", workspace.SetPermission)
 
 	// view shared remote workspaces to user
 	mux.HandleFunc("/check", workspace.ViewWorkspaces)
@@ -90,5 +99,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Hello world")
+	// fmt.Println("Hello world")
 }
