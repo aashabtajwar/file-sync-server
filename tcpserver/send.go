@@ -11,6 +11,48 @@ import (
 	"time"
 )
 
+func send(msg string, userID string, metaDataString string) {
+
+	conn := ReturnConnection(userID)
+	if conn != nil {
+
+		msgBytes := []byte(msg)
+		metaDataBytes := []byte(metaDataString)
+		binary.Write(conn, binary.LittleEndian, int64(len(msgBytes)))
+		n1, err := io.CopyN(conn, bytes.NewReader(msgBytes), int64(len(msgBytes)))
+
+		if err != nil {
+			fmt.Println("Error Sending Message Data\n", err)
+		}
+
+		fmt.Printf("Written %d Message Bytes\n", n1)
+
+		time.Sleep(100 * time.Millisecond)
+
+		binary.Write(conn, binary.LittleEndian, int64(len(metaDataBytes)))
+		n2, err := io.CopyN(conn, bytes.NewReader(metaDataBytes), int64(len(metaDataBytes)))
+
+		if err != nil {
+			fmt.Println("Error Sending Message Metadata\n", err)
+		}
+
+		fmt.Printf("Writtten %d bytes of Metadata\n", n2)
+	}
+}
+
+func SendPermissionGrant(workspaceName string, workspaceID string, userID string) {
+	time.Sleep(100 * time.Millisecond)
+	metaDataString := fmt.Sprintf(`
+		{
+			"isPermission": "1",
+			"workspace": "%s",
+			"workspace_id": "%s",
+		}
+	`, workspaceName, workspaceID)
+	msg := "random message"
+	send(msg, userID, metaDataString)
+}
+
 func SendNotificationMessage(msg string, userID string) {
 	time.Sleep(100 * time.Millisecond)
 	metaDataString := `

@@ -12,7 +12,8 @@ import (
 func BroadCastToUsers(fileData *bytes.Buffer, conncetedUsers map[string]net.Conn, metadata map[string]string, thisConn net.Conn, dataString string, connections []net.Conn) {
 	// query user_ids from db
 	// stream file to only those connected users that are in shared workspace
-	fmt.Println("BROADCAST FUNCTION")
+	fmt.Println("Now broadcasting data to users\n", string(fileData.String()))
+
 	// fmt.Println("received file data\n", fileData.Bytes())
 
 	// fmt.Println("\n Received file metadata\n", metadata)

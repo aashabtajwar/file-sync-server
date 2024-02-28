@@ -306,10 +306,10 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 		}
 
 		db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
-		defer db.Close()
 		if err != nil {
 			users.DatabaseError(err, writer)
 		}
+		defer db.Close()
 
 		insert := "INSERT INTO workspace(name, user_id) VALUES ('" + data["name"] + "', '" + user_id.(string) + "')"
 
@@ -482,6 +482,8 @@ func SetPermission(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		users.DatabaseError(err, w)
 	}
+	// send message through tcp
+	tcpserver.SendPermissionGrant(requestBodyData["workspace_name"], requestBodyData["workspace_id"], requestBodyData["user_id"])
 	payload := make(map[string]string)
 	sendJsonResponse(payload, w)
 

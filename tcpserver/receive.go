@@ -62,7 +62,7 @@ func deleteFile(workspaceName string, fileName string) {
 */
 
 func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
-	// fmt.Println("data for saving file...\n", fileData.Bytes())
+	fmt.Println("data for saving file...\n", string(fileData.Bytes()))
 
 	// this is not an ideal way to define storage dir
 	storageDir := "/home/aashab/code/src/github.com/aashabtajwar/server-th/storage/"
@@ -296,16 +296,18 @@ ReadLoop:
 					* properly learn channels
 				*/
 				if mappedData["type"] == "token" {
-					go verifyToken(fileData, conn)
+					verifyToken(fileData, conn)
+					fileData.Reset()
 				} else if mappedData["type"] == "file" {
 					BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, conns)
 					if mappedData["isDeleted"] == "Yes" {
 						deleteFile(mappedData["workspace"], mappedData["fileName"])
 					} else {
 						conns = updatedConnections()
-						go saveFile(fileData, mappedData)
+						saveFile(fileData, mappedData)
 					}
 				}
+				fileData.Reset()
 				c = 0
 				continue ReadLoop
 			}
