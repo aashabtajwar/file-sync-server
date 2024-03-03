@@ -166,7 +166,7 @@ func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
 	errorhandling.DbConnectionError(err)
 	var workspaceIDs []map[string]string
-
+	fmt.Println("user id == ", user_id.(string))
 	q := fmt.Sprintf("SELECT workspace.name, workspace.workspace_id FROM workspace INNER JOIN shared_workspace ON workspace.workspace_id=shared_workspace.workspace_id WHERE shared_workspace.user_id='%s'", user_id.(string))
 	rows, err := db.Query(q)
 	fmt.Println("rows = ", rows)

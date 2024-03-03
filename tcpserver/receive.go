@@ -61,8 +61,8 @@ func deleteFile(workspaceName string, fileName string) {
 * there will be many versions of the same file hash so that previous versions of the file can be restored
 */
 
-func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
-	fmt.Println("data for saving file...\n", string(fileData.Bytes()))
+func saveFile(fileData *bytes.Buffer, metadata map[string]string, start time.Time) {
+	// fmt.Println("data for saving file...\n", string(fileData.Bytes()))
 
 	// this is not an ideal way to define storage dir
 	storageDir := "/home/aashab/code/src/github.com/aashabtajwar/server-th/storage/"
@@ -206,12 +206,14 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string) {
 
 		// add to database
 		insert := fmt.Sprintf("INSERT INTO workspace_files (filename, workspace_id, user_id, version) VALUES ('%s', '%s', '%s', %d)", fileDir, metadata["workspaceId"], metadata["user_id"], 1)
-		res, err := db.Query(insert)
+		_, err := db.Query(insert)
 		if err != nil {
 			fmt.Println("Insert Error:\n", err)
 		}
-		fmt.Println(res)
+		// fmt.Println(res)
 	}
+	elapsed := time.Since(start)
+	fmt.Println("Total Elapsed Time ", elapsed)
 
 	// check if this workspace have connected users
 	// if so send the file to them
@@ -243,6 +245,7 @@ ReadLoop:
 			// &size because it needs to read into memory
 			// binary.Write(conn, binary.LittleEndian, &sizeTwo)
 			// continue Try
+			start := time.Now()
 			iter += 1
 			binary.Read(conn, binary.LittleEndian, &size)
 			n, err := io.CopyN(dataBuf, conn, int64(size))
@@ -268,7 +271,7 @@ ReadLoop:
 
 			// fmt.Println("received data from receiver :\n", dataBuf.Bytes())
 			if c%2 != 0 {
-				fmt.Println("Update 4.1 = ", connections)
+				// fmt.Println("Update 4.1 = ", connections)
 				// raw file data received
 				// store the data in another variable
 				// fmt.Println("RRRR File data...")
@@ -276,7 +279,7 @@ ReadLoop:
 				dataBuf.Reset()
 
 			} else if c%2 == 0 {
-				fmt.Println("Update 4.2 = ", connections)
+				// fmt.Println("Update 4.2 = ", connections)
 				// file metadata received
 				// fmt.Println("Received Meta :\n", dataBuf.Bytes())
 				data := dataBuf.Bytes()
@@ -289,7 +292,7 @@ ReadLoop:
 			}
 
 			if c == 2 {
-				fmt.Println("Update 5 = ", connections)
+				// fmt.Println("Update 5 = ", connections)
 				/*
 					--------------------SIDE NOTES------------------------
 					* here, maybe channels should be used instead of go verifiedToken or go saveFile
@@ -299,12 +302,12 @@ ReadLoop:
 					verifyToken(fileData, conn)
 					fileData.Reset()
 				} else if mappedData["type"] == "file" {
-					BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, conns)
+					// BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, conns)
 					if mappedData["isDeleted"] == "Yes" {
 						deleteFile(mappedData["workspace"], mappedData["fileName"])
 					} else {
 						conns = updatedConnections()
-						saveFile(fileData, mappedData)
+						saveFile(fileData, mappedData, start)
 					}
 				}
 				fileData.Reset()

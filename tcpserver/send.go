@@ -92,7 +92,6 @@ func SendFiles(workspaceName string, workspaceId string, user_id string) {
 	// send files according to the workspace
 	// loop over the files and check if they contain the correct workspace_workspaceid in their names
 	// the ones that do, send those files
-	fmt.Println("came here...")
 	time.Sleep(100 * time.Millisecond)
 
 	// NOTE: check should workspaceName_authorId
