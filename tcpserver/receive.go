@@ -67,6 +67,8 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string, start time.Tim
 	// this is not an ideal way to define storage dir
 	storageDir := "/home/aashab/code/src/github.com/aashabtajwar/server-th/storage/"
 
+	el := time.Now()
+
 	// version carrier path needs to be updated
 	// to have a better name
 	versionCarrierPath := storageDir + metadata["workspace"] + "_" + metadata["user_id"] + "_" + metadata["name"] + "_currentversion.txt" // user_id should be extracted from connectedUser (or is this one okay?)
@@ -212,6 +214,9 @@ func saveFile(fileData *bytes.Buffer, metadata map[string]string, start time.Tim
 		}
 		// fmt.Println(res)
 	}
+
+	end := time.Since(el)
+	fmt.Println("Time taken to finish writing file ", end)
 	elapsed := time.Since(start)
 	fmt.Println("Total Elapsed Time ", elapsed)
 
@@ -239,7 +244,7 @@ ReadLoop:
 			fmt.Println("ending...")
 			return
 		default:
-			conn.SetDeadline(time.Now().Add(200 * time.Second))
+			conn.SetDeadline(time.Now().Add(2000 * time.Second))
 			var size int64
 			// read size from connection which is a binary
 			// &size because it needs to read into memory
@@ -302,7 +307,7 @@ ReadLoop:
 					verifyToken(fileData, conn)
 					fileData.Reset()
 				} else if mappedData["type"] == "file" {
-					// BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, conns)
+					BroadCastToUsers(fileData, connectedUser, mappedData, conn, dataString, conns)
 					if mappedData["isDeleted"] == "Yes" {
 						deleteFile(mappedData["workspace"], mappedData["fileName"])
 					} else {
