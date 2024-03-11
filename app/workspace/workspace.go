@@ -18,7 +18,7 @@ import (
 	"github.com/aashabtajwar/th-server/tcpserver"
 )
 
-var permissionChange = make(map[string]int)
+// var permissionChange = make(map[string]int)
 
 func resolveRequestBody(r *http.Request) map[string]string {
 	body, err := io.ReadAll(r.Body)
