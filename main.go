@@ -94,7 +94,7 @@ func main() {
 
 	// exec.Command("xdg-open", "http:/127.0.0.1:3333/").Run()
 
-	err := http.ListenAndServe("192.168.0.103:3333", mux)
+	err := http.ListenAndServe("192.168.171.200:3333", mux)
 	if err != nil {
 		log.Fatal(err)
 	}
