@@ -59,6 +59,9 @@ func main() {
 
 	fmt.Println("Turning on server")
 
+	// users that have been shared with
+	// mux.HandleFunc("/shared-users)
+
 	// create workspace
 	mux.HandleFunc("/createw", workspace.Create)
 
@@ -67,6 +70,12 @@ func main() {
 
 	// add user to workspace
 	mux.HandleFunc("/add-user", workspace.AddUserToWorkspace)
+
+	// check shared users
+	mux.HandleFunc("/shared-users", workspace.ViewAddedUsers)
+
+	// set permission
+	mux.HandleFunc("/set-permission", workspace.SetPermission)
 
 	// view shared remote workspaces to user
 	mux.HandleFunc("/check", workspace.ViewWorkspaces)
@@ -85,10 +94,10 @@ func main() {
 
 	// exec.Command("xdg-open", "http:/127.0.0.1:3333/").Run()
 
-	err := http.ListenAndServe(":3333", mux)
+	err := http.ListenAndServe("192.168.171.200:3333", mux)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Hello world")
+	// fmt.Println("Hello world")
 }

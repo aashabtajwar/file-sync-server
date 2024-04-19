@@ -39,6 +39,7 @@ func Register(writer http.ResponseWriter, request *http.Request) {
 		// get the field values
 		firstName := data["first_name"]
 		lastName := data["last_name"]
+		username := data["username"]
 		email := data["email"]
 		password := data["password"]
 
@@ -46,6 +47,9 @@ func Register(writer http.ResponseWriter, request *http.Request) {
 
 		// open database
 		db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
+		if err != nil {
+			fmt.Println("Error connecting to database\n", err)
+		}
 		defer db.Close()
 		if err != nil {
 			DatabaseError(err, writer)
@@ -57,8 +61,9 @@ func Register(writer http.ResponseWriter, request *http.Request) {
 		}
 		fmt.Println("Hashed password " + string(hashedPassword))
 
-		insert := "INSERT INTO users(fname, lname, email, password) VALUES ('" + firstName + "', '" + lastName + "', '" + email + "', '" + string(hashedPassword) + "')"
-		res, err := db.Query(insert)
+		q := fmt.Sprintf(`INSERT INTO users (fname, lname, username, email, password) VALUES ("%s", "%s", "%s", "%s", "%s")`, firstName, lastName, username, email, string(hashedPassword))
+		// insert := "INSERT INTO users(fname, lname, username, email, password) VALUES ('" + firstName + "', '" + lastName + "', '" + email + "', '" + string(hashedPassword) + "')"
+		res, err := db.Query(q)
 		if err != nil {
 			DatabaseError(err, writer)
 		}

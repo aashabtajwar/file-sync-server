@@ -18,11 +18,16 @@ import (
 	"github.com/aashabtajwar/th-server/tcpserver"
 )
 
+// var permissionChange = make(map[string]int)
+
 func resolveRequestBody(r *http.Request) map[string]string {
 	body, err := io.ReadAll(r.Body)
 	errorhandling.RequestBodyReadingError(err)
 	requestBodyData := make(map[string]string)
 	err = json.Unmarshal(body, &requestBodyData)
+	if err != nil {
+		fmt.Println("Error Unmarshalling Json\n", err)
+	}
 	return requestBodyData
 }
 
@@ -161,7 +166,7 @@ func ViewWorkspaces(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
 	errorhandling.DbConnectionError(err)
 	var workspaceIDs []map[string]string
-
+	fmt.Println("user id == ", user_id.(string))
 	q := fmt.Sprintf("SELECT workspace.name, workspace.workspace_id FROM workspace INNER JOIN shared_workspace ON workspace.workspace_id=shared_workspace.workspace_id WHERE shared_workspace.user_id='%s'", user_id.(string))
 	rows, err := db.Query(q)
 	fmt.Println("rows = ", rows)
@@ -301,10 +306,10 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 		}
 
 		db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/filesync")
-		defer db.Close()
 		if err != nil {
 			users.DatabaseError(err, writer)
 		}
+		defer db.Close()
 
 		insert := "INSERT INTO workspace(name, user_id) VALUES ('" + data["name"] + "', '" + user_id.(string) + "')"
 
@@ -325,7 +330,7 @@ func Create(writer http.ResponseWriter, request *http.Request) {
 		payload["workspace_id"] = strconv.Itoa(lastId)
 		jsonRes, err := json.Marshal(payload)
 		if err != nil {
-			fmt.Println("Error marshalling json\n", jsonRes)
+			fmt.Println("Error marshalling json\n", err)
 		}
 
 		// respond with workspace id
@@ -413,6 +418,7 @@ func AddUserToWorkspace(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewAddedUsers(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("came here...")
 	requestBodyData := resolveRequestBody(r)
 	db := database.DBInit()
 	q := fmt.Sprintf(`
@@ -443,9 +449,44 @@ func ViewAddedUsers(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("Error Marshalling Json\n", err)
 	}
+	fmt.Println("sending response back...")
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonresponse)
+}
+
+func sendJsonResponse(payload map[string]string, w http.ResponseWriter) {
+	jsonresponse, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("Error Marshalling Json\n", err)
+	}
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonresponse)
+}
+
+func SetPermission(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("changing permission...")
+	requestBodyData := resolveRequestBody(r)
+	db := database.DBInit()
+	set := 0
+	if requestBodyData["permission"] == "write" {
+		set = 1
+	}
+	insert := fmt.Sprintf(`
+		UPDATE shared_workspace
+		SET permission=%d
+		WHERE user_id="%s" AND workspace_id="%s"
+	`, set, requestBodyData["user_id"], requestBodyData["workspace_id"])
+	_, err := db.Query(insert)
+	if err != nil {
+		users.DatabaseError(err, w)
+	}
+	// send message through tcp
+	tcpserver.SendPermissionGrant(requestBodyData["workspace_name"], requestBodyData["workspace_id"], requestBodyData["user_id"])
+	payload := make(map[string]string)
+	sendJsonResponse(payload, w)
+
 }
 
 func DeleteWorksapce(w http.ResponseWriter, r *http.Request) {

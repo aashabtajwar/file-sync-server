@@ -11,6 +11,48 @@ import (
 	"time"
 )
 
+func send(msg string, userID string, metaDataString string) {
+
+	conn := ReturnConnection(userID)
+	if conn != nil {
+
+		msgBytes := []byte(msg)
+		metaDataBytes := []byte(metaDataString)
+		binary.Write(conn, binary.LittleEndian, int64(len(msgBytes)))
+		n1, err := io.CopyN(conn, bytes.NewReader(msgBytes), int64(len(msgBytes)))
+
+		if err != nil {
+			fmt.Println("Error Sending Message Data\n", err)
+		}
+
+		fmt.Printf("Written %d Message Bytes\n", n1)
+
+		time.Sleep(100 * time.Millisecond)
+
+		binary.Write(conn, binary.LittleEndian, int64(len(metaDataBytes)))
+		n2, err := io.CopyN(conn, bytes.NewReader(metaDataBytes), int64(len(metaDataBytes)))
+
+		if err != nil {
+			fmt.Println("Error Sending Message Metadata\n", err)
+		}
+
+		fmt.Printf("Writtten %d bytes of Metadata\n", n2)
+	}
+}
+
+func SendPermissionGrant(workspaceName string, workspaceID string, userID string) {
+	time.Sleep(100 * time.Millisecond)
+	metaDataString := fmt.Sprintf(`
+		{
+			"isPermission": "1",
+			"workspace": "%s",
+			"workspace_id": "%s",
+		}
+	`, workspaceName, workspaceID)
+	msg := "random message"
+	send(msg, userID, metaDataString)
+}
+
 func SendNotificationMessage(msg string, userID string) {
 	time.Sleep(100 * time.Millisecond)
 	metaDataString := `
@@ -50,7 +92,7 @@ func SendFiles(workspaceName string, workspaceId string, user_id string) {
 	// send files according to the workspace
 	// loop over the files and check if they contain the correct workspace_workspaceid in their names
 	// the ones that do, send those files
-	fmt.Println("came here...")
+	fmt.Println("sending files now...")
 	time.Sleep(100 * time.Millisecond)
 
 	// NOTE: check should workspaceName_authorId
@@ -59,7 +101,7 @@ func SendFiles(workspaceName string, workspaceId string, user_id string) {
 	fmt.Println("for matching --> ", check)
 	// ln := SetupConn()
 	entries, err := os.ReadDir("./storage/")
-	fmt.Println(entries)
+	// fmt.Println(entries)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -71,13 +113,17 @@ func SendFiles(workspaceName string, workspaceId string, user_id string) {
 			splitted := strings.Split(e.Name(), ".")
 			fmt.Println("Spplited --> ", splitted)
 			fmt.Println("target file --> ", e.Name())
-			if (splitted[len(splitted)-1]) == "go" {
+
+			////// only GOOOO files??????????????????
+			//// FOR NOW, NOT SENDING ANY TEXT FILES!
+			if (splitted[len(splitted)-1]) != "txt" {
 				pwd, err := os.Getwd()
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
 				filePath := pwd + "/storage/" + e.Name()
+				fmt.Println("toi == ", filePath)
 
 				fmt.Println("file path --> ", filePath)
 				file, err := os.Open(filePath)
@@ -93,6 +139,13 @@ func SendFiles(workspaceName string, workspaceId string, user_id string) {
 					fmt.Println("Error reading file\n", er)
 				}
 
+				// renaming edit
+
+				sp := strings.Split(e.Name(), "_")
+				fname := sp[1] + sp[len(sp)-1]
+
+				// renaming edit ends
+
 				metaDataString := fmt.Sprintf(`
 					{
 						"workspace": "%s",
@@ -102,7 +155,7 @@ func SendFiles(workspaceName string, workspaceId string, user_id string) {
 						"name": "%s",
 						"isNotification" : "0"
 					}
-				`, workspaceName, e.Name(), splitted[len(splitted)-1], e.Name())
+				`, workspaceName, e.Name(), splitted[len(splitted)-1], fname)
 				fmt.Println("Metadata string --> ", metaDataString)
 				metaDataBytes := []byte(metaDataString)
 				binary.Write(conn, binary.LittleEndian, int64(fi.Size()))
