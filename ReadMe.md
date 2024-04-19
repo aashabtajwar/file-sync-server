@@ -4,10 +4,10 @@ Code for the backend of File Synchronization System. For the client, check [here
 
 # Installation
 1. Make sure to have Go in your system. You can install it from [here](https://go.dev/doc/install).
-2. Clone this repository 
-`
+2. Clone this repository
+```
 git clone git@github.com:aashabtajwar/file-sync-client.git
-`
+```
 3. Use `go mod tidy`. This will install necessary packages.
 4. The server uses MySQL, so make sure you have it installed. Digital Ocean has a great [blog](https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-22-04) covering on how to install MySQL on Ubuntu 22.04. Alternatively, you can use [MariaDB](https://www.digitalocean.com/community/tutorials/how-to-install-mariadb-on-ubuntu-22-04)
 5. Import SQL file `mysql -u <username> -p file-sync < filesync.sql`.
