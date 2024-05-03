@@ -24,6 +24,7 @@ The backend is incomplete and still under development. More features are underwa
 - Giving permissions to shared users
 - Conflict resolution
 - Compress files before storing
+- Transmit only the file changes
 
 
 ## 
